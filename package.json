@@ -1,0 +1,23 @@
+{
+  "name": "field-day",
+  "version": "1.0.0",
+  "description": "A simple card game about getting the highest score.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shashanksudheer/field-day.git"
+  },
+  "author": "Shashank Sudheer",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shashanksudheer/field-day/issues"
+  },
+  "homepage": "https://github.com/shashanksudheer/field-day#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  }
+}

@@ -1,0 +1,19 @@
+Field Day
+
+
+General Tasks
+    Game runs with multiple players <--
+    User Authentication
+    Statistics/Analysis
+    Betting
+    Chat
+
+Server Side
+    Send hand data from server to each player
+    Create a lobby/room which will wait for up to 4 players or until someone hits start
+    
+
+Front End
+    login/name choice UI 
+    Cant place a card of higher value on pile with card already there
+    
