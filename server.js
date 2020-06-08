@@ -1,168 +1,129 @@
-// Dependencies
 var express = require('express');
-var http = require('http');
-var path = require('path');
-var socketIO = require('socket.io');
-
-//Start the express app
 var app = express();
-var server = http.Server(app);
-var io = socketIO(server);
-
-//app config
-app.set('port', 5000);
-app.use('/static', express.static(path.join(__dirname, '/static')));
+var server = require('http').Server(app);
+var playerClass = require('./player');
+var roomClass = require('./room');
 
 
+//set up io variable to listen
+var io = require('socket.io').listen(server);
 
-// Routing
-app.get('/', function(request, response) {
-    response.sendFile(path.join(__dirname, '/static/index.html'));
-  });
+//houses all players in the server
+var players = {};
 
+//houses all the rooms in the server
+var rooms = [];
 
-  // Starts the server.
-server.listen(5000, function() {
-    console.log('Starting server on port 5000');
-    console.log(path.join(__dirname, '/static'));
-  });
+//houses all the rooms in the server
 
-
-
-//-----------------------------------------------------------------------------------------//
+//Set Folder For Serving Files in the Client Side
+app.use(express.static(__dirname + '/public'));
 
 
+/* --------------------- ROUTES --------------------------------- */
 
-//Game Logic
-/*
-    Field Day Card Game
-*/
-
-//GLOBALS
-const SUITS = ["s", "d", "c", "h"];
-const VALS = ["1","2","3","4","5","6","7","8","9","10","11", "12","13"];
-const INITIAL_DECK = [
-  '1s',  '1d',  '1c',  '1h',  '2s',  '2d', 
-  '2c',  '2h',  '3s',  '3d',  '3c',  '3h', 
-  '4s',  '4d',  '4c',  '4h',  '5s',  '5d', 
-  '5c',  '5h',  '6s',  '6d',  '6c',  '6h', 
-  '7s',  '7d',  '7c',  '7h',  '8s',  '8d', 
-  '8c',  '8h',  '9s',  '9d',  '9c',  '9h', 
-  '10s', '10d', '10c', '10h', '11s', '11d',
-  '11c', '11h', '12s', '12d', '12c', '12h',
-  '13s', '13d', '13c', '13h', '1j', '2j', '0p'
-];
-
-const INITIAL_PLAYER_DATA = {
-  points: 0,
-  hand: []
-}
-
-//Template JSON object for how a game state looks 
-const INITIAL_DATA = {
-  deck: INITIAL_DECK,
-  pile1: [],
-  pile2: [],
-  pile3: [],
-  pile4: [],
-  players = [],
-  discard: []
-};
-
-
-
-//Deck Class
-class Deck {
-    //Creates a pre-shuffled deck and stores it into the deck array
-    constructor(deck=INITIAL_DECK) {
-        this.deck = deck
-        this.shuffle();
-        console.log(this.deck);
-    }
-
-    //Shuffles by choosing two random locations within the deck and swapping the cards at the locations
-    shuffle() {
-        for (var i = 0; i < 1000; i++)
-        {
-            var location1 = Math.floor((Math.random() * this.deck.length));
-            var location2 = Math.floor((Math.random() * this.deck.length));
-            var tmp = this.deck[location1];
-    
-            this.deck[location1] = this.deck[location2];
-            this.deck[location2] = tmp;
-        }
-        return;
-    }
-
-    //returns string representation of the deck one card at a time
-    getDeck() {
-        var str = "";
-        for (var i = 0; i < this.deck.length; i++) {
-            str = str + " " + this.deck[i].getCard();
-        }
-        return str;
-    }
-
-    //removes a card at an index
-    removeCard(ind)  {
-        return this.deck.splice(ind, 1);
-    }
-}
-
-//A room is an object with all the players currently playing and the state of the game
-class Room {
-  constructor(data=INITIAL_DATA) {
-    //If no deck data is passed in, the room is created with the state at the initial point in a game
-    this.deck = data.deck;
-
-    //pile data holds arrays of cards in piles
-    this.pile1 = data.pile1;
-    this.pile2 = data.pile2;
-    this.pile3 = data.pile3;
-    this.pile4 = data.pile4;
-
-    //boolean that determines if the game is over
-    this.over = false;
-
-    //players are stored here
-    this.players = data.players;
-
-    //discarded cards are held in this array
-    this.discard = data.discard;
-
-    //keeping in track whos turn it is (the current player)
-    this.current = 0;
-
-  }
-}
-
-//player class that contains the socket connection id and the players current revealed game state info
-class Player {
-  constructor(id=null, data=INITIAL_PLAYER_DATA) {
-    this.id = id;
-    this.hand = data.hand;
-    this.points = data.points;
-  }
-}
-
-
-//-----------------------------------------------------------------------------------------//
-
-
-var SOCKET_LIST= {}
-
-//BACK TO SOCKET STUFF
-// On a socket connection run this function
-io.on('connection', function(socket) {
-  socket.id = Math.random();
-  SOCKET_LIST[socket.id] = socket;
-
-  var player = Player(socket.id);
+//home route
+app.get('/', function (req, res) {
+  res.sendFile(__dirname + 'index.html');
 });
 
-//REMOVE AFTER DONE TESTING
-setInterval(function() {
 
-  }, 1000);
+//logic to listen for connections and disconnections
+io.on('connection', function (socket) {
+
+    // create a new player and add it to the players object
+    var newPlayer = new playerClass.Player("player " + socket.id, socket.id);
+    players[socket.id] = newPlayer;
+    //DEBUG
+    console.log(newPlayer.name + " connected");
 
 
+    //check to see if a room exists with a slot for the player
+    var myRoom = null;
+    var roomFound = false;
+    //check if no rooms exist
+    if (rooms.length == 0) {
+      //store newly created room in global room collection
+      var newRoom = new roomClass.Room(rooms.length);
+      rooms.push(newRoom);
+
+      //set the room for the player
+      myRoom = rooms[0];
+
+      //ensure player info is stored within room and that player knows which room it is in
+      myRoom.players.push(players[socket.id]);
+      players[socket.id].roomId = myRoom.roomId;
+    }
+    //if rooms do exist find the first one with an empty slot
+    else {
+      for (i = 0; i < rooms.length; i++) {
+        if (rooms[i].players.length < 4) {
+          //set the room for the player
+          myRoom = rooms[i];
+          
+          //ensure player info is stored within room
+          myRoom.players.push(players[socket.id]);
+          roomFound = true;        
+        }
+      }
+      //if no rooms are found then create a new room
+      if (!roomFound) {
+        var newRoom = new roomClass.Room(rooms.length);
+        //ensure player info is stored within room and that player knows which room it is in
+        newRoom.players.push(players[socket.id]);
+        players[socket.id].roomId = newRoom.roomId;
+  
+        //store newly created room in global room collection
+        rooms.push(newRoom);
+        myRoom = newRoom;
+      }
+    }
+
+    //if the room is full, start game
+    if (myRoom.players.length == 4) { myRoom.startGame(); }
+    
+
+    // send the room object to the player
+    socket.on('dealHands', function() {
+      io.emit('dealHand', players[socket.id].hand);
+    });
+
+    //What to do when a user disconnects
+    socket.on('disconnect', function () {
+      //When a player disconnects remove them from the room by searching through the array of players until socket_id is found
+      for (i = 0; i < 4; i++) {
+        if (myRoom.players[i].socket_id == socket.id) {
+          myRoom.players.splice(i, 1);
+          break;
+        } 
+      }
+      //Then check if there are still people within the room (in case prev player just disconnected)
+      //if no other players delete the room
+      if (myRoom.players.length == 0) {
+        rooms.splice(myRoom.roomId, 1);
+      }
+      //DEBUG CODE
+      console.log(players[socket.id].name + ' disconnected');
+      delete players[socket.id];
+      //DEBUG CODE
+      console.log("rooms: " + numRooms());
+    });
+  });
+
+server.listen(8081, function () {
+  console.log(`Listening on ${server.address().port}`);
+}); 
+
+
+/* ------------------------------ DEBUG FUNCTIONS ------------------------------------------ */
+var getPlayersFromRooms = function() {
+  for (i = 0; i < rooms.length; i++) {
+    for (j = 0; j < 4; j++) {
+      rooms[i].players[i].name
+    }
+  }
+}
+
+var numRooms = function() {
+  return rooms.length;
+}
