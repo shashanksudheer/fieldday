@@ -78,12 +78,11 @@ export default class Game extends Phaser.Scene {
     this.zone = new Zone(this);
     this.dropZone = this.zone.renderZone();
     this.outline = this.zone.renderOutline(this.dropZone);
-
+    
     this.socket.on('dealHand', function(hand) {
-      console.log(hand[0]);
       self.dealCards(hand);
     });
-
+    
     this.dealCards = (hand) => {
       for (let i = 0; i < 5; i++) {
         let playerCard = new Card(this);
@@ -92,7 +91,7 @@ export default class Game extends Phaser.Scene {
     }
 
     this.readyUp.on('pointerdown', function () {
-      self.socket.emit('dealHands');
+      self.socket.emit('readyUp');
     })
 
     this.readyUp.on('pointerover', function () {
@@ -109,11 +108,13 @@ export default class Game extends Phaser.Scene {
       gameObject.y = dragY;
     })
 
+    //function that runs when a card is initially dragged  
     this.input.on('dragstart', function (pointer, gameObject) {
       gameObject.setTint(0xff69b4);
       self.children.bringToTop(gameObject);
   })
 
+  //function that runs when a card drag is over and the card is dropped
   this.input.on('dragend', function (pointer, gameObject, dropped) {
       gameObject.setTint();
       if (!dropped) {
@@ -122,11 +123,13 @@ export default class Game extends Phaser.Scene {
       }
   })
 
+  //when the card is dropped
   this.input.on('drop', function (pointer, gameObject, dropZone) {
-      dropZone.data.values.cards++;
-      gameObject.x = (dropZone.x - 350) + (dropZone.data.values.cards * 50);
-      gameObject.y = dropZone.y;
-      gameObject.disableInteractive();
+    console.log(dropZone.data.values);
+    dropZone.data.values.cards++;
+    gameObject.x = (dropZone.x - 350) + (dropZone.data.values.cards * 50);
+    gameObject.y = dropZone.y;
+    gameObject.disableInteractive();
   })
   }
   

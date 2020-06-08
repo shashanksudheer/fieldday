@@ -20,14 +20,14 @@ class Room {
         this.pile3 = [];
         this.pile4 = [];
 
+        //discarded cards are held in this array
+        this.discard = [];
+
         //boolean that determines if the game is over
         this.over = false;
 
         //players are stored here
         this.players = [];
-
-        //discarded cards are held in this array
-        this.discard = [];
 
         //keeping in track whos turn it is (the current player)
         this.current = 0;
@@ -83,6 +83,18 @@ class Room {
         for (var i = 0; i < amount; i++) {
             player.hand.push(this.deck.shift());
         }
+    }
+
+    //check if all players are ready to start game
+    checkReady() {
+        for (var play of this.players) {
+            if (!play.ready) {
+                //if a single player is not ready yet, game cannot start
+                return false;
+            }
+        }
+        //if all players are ready, game can start
+        return true;
     }
 
 }
