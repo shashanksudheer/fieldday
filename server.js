@@ -104,7 +104,7 @@ io.on('connection', function (socket) {
       //iterate through players in room and deal their specific hand to them
       for (var player of myRoom.players) {
         console.log(players[player.socket_id].hand);
-        io.emit('dealHand', players[player.socket_id].hand);
+        io.to(player.socket_id).emit('dealHand', players[player.socket_id].hand);
       }
     }
   });

@@ -74,11 +74,7 @@ export default class Game extends Phaser.Scene {
     this.socket = io();
     this.readyUp = this.add.text(75, 350, ['Ready Up']).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff').setInteractive();
     let self = this;
-
-    this.zone = new Zone(this);
-    this.dropZone = this.zone.renderZone();
-    this.outline = this.zone.renderOutline(this.dropZone);
-    
+   
     this.socket.on('dealHand', function(hand) {
       self.dealCards(hand);
     });
@@ -86,53 +82,84 @@ export default class Game extends Phaser.Scene {
     this.dealCards = (hand) => {
       for (let i = 0; i < 5; i++) {
         let playerCard = new Card(this);
-        playerCard.render(475 + (i * 100), 600, hand[i]);
+        playerCard.render(475 + (i * 100), 800, hand[i]);
       }
     }
 
     this.readyUp.on('pointerdown', function () {
       self.socket.emit('readyUp');
-    })
+    });
 
     this.readyUp.on('pointerover', function () {
       self.readyUp.setColor('#ff69b4');
-    })
+    });
 
     this.readyUp.on('pointerout', function () {
       self.readyUp.setColor('#00ffff');
     })
 
-    //method that allows the cards to be dragged around
-    this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-      gameObject.x = dragX;
-      gameObject.y = dragY;
-    })
+    //  A drop zone
+    var zone = this.add.zone(500, 300, 300, 300).setRectangleDropZone(300, 300);
 
-    //function that runs when a card is initially dragged  
+    //  Just a visual display of the drop zone
+    var graphics = this.add.graphics();
+    graphics.lineStyle(2, 0xffff00);
+    graphics.strokeRect(zone.x - zone.input.hitArea.width / 2, zone.y - zone.input.hitArea.height / 2, zone.input.hitArea.width, zone.input.hitArea.height);
+
     this.input.on('dragstart', function (pointer, gameObject) {
-      gameObject.setTint(0xff69b4);
-      self.children.bringToTop(gameObject);
-  })
 
-  //function that runs when a card drag is over and the card is dropped
-  this.input.on('dragend', function (pointer, gameObject, dropped) {
-      gameObject.setTint();
-      if (!dropped) {
-          gameObject.x = gameObject.input.dragStartX;
-          gameObject.y = gameObject.input.dragStartY;
-      }
-  })
+        this.children.bringToTop(gameObject);
 
-  //when the card is dropped
-  this.input.on('drop', function (pointer, gameObject, dropZone) {
-    console.log(dropZone.data.values);
-    dropZone.data.values.cards++;
-    gameObject.x = (dropZone.x - 350) + (dropZone.data.values.cards * 50);
-    gameObject.y = dropZone.y;
-    gameObject.disableInteractive();
-  })
-  }
+    }, this);
+
+    this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
+
+        gameObject.x = pointer.x;
+        gameObject.y = pointer.y;
+
+    });
+
+    this.input.on('dragenter', function (pointer, gameObject, dropZone) {
+
+        graphics.clear();
+        graphics.lineStyle(2, 0x00ffff);
+        graphics.strokeRect(zone.x - zone.input.hitArea.width / 2, zone.y - zone.input.hitArea.height / 2, zone.input.hitArea.width, zone.input.hitArea.height);
+
+    });
+
+    this.input.on('dragleave', function (pointer, gameObject, dropZone) {
+
+        graphics.clear();
+        graphics.lineStyle(2, 0xffff00);
+        graphics.strokeRect(zone.x - zone.input.hitArea.width / 2, zone.y - zone.input.hitArea.height / 2, zone.input.hitArea.width, zone.input.hitArea.height);
+
+    });
+
+    this.input.on('drop', function (pointer, gameObject, dropZone) {
+
+        gameObject.x = dropZone.x;
+        gameObject.y = dropZone.y;
+
+        gameObject.input.enabled = false;
+
+    });
+
+    this.input.on('dragend', function (pointer, gameObject, dropped) {
+
+        if (!dropped)
+        {
+            gameObject.x = gameObject.input.dragStartX;
+            gameObject.y = gameObject.input.dragStartY;
+        }
+
+        graphics.clear();
+        graphics.lineStyle(2, 0xffff00);
+        graphics.strokeRect(zone.x - zone.input.hitArea.width / 2, zone.y - zone.input.hitArea.height / 2, zone.input.hitArea.width, zone.input.hitArea.height);
+
+    });
   
+  } //end create()
+
   update() {
   
   }

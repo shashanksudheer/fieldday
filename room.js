@@ -40,7 +40,9 @@ class Room {
         
         //deal cards out to all players 
         for (var play of this.players) {
-            this.dealCards(play, 5);
+            if (play.hand.length == 0) {
+                this.dealCards(play, 5);
+            }
         }
 
         //DEBUG CODE
@@ -93,8 +95,10 @@ class Room {
                 return false;
             }
         }
-        //if all players are ready, game can start
-        return true;
+        //if all players are ready and there are at least 2 players, game can start
+        if (this.players.length >= 2) {
+            return true;
+        }
     }
 
 }
