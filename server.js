@@ -1,12 +1,9 @@
-var express = require('express');
-var app = express();
-var server = require('http').Server(app);
+const server = require('express')();
+const http = require('http').createServer(server);
+const io = require('socket.io')(http);
 var playerClass = require('./player');
 var roomClass = require('./room');
 
-
-//set up io variable to listen
-var io = require('socket.io').listen(server);
 
 //houses all players in the server
 var players = {};
@@ -14,18 +11,8 @@ var players = {};
 //houses all the rooms in the server
 var rooms = [];
 
-//houses all the rooms in the server
-
-//Set Folder For Serving Files in the Client Side
-app.use(express.static(__dirname + '/public'));
-
 
 /* --------------------- ROUTES --------------------------------- */
-
-//home route
-app.get('/', function (req, res) {
-  res.sendFile(__dirname + 'index.html');
-});
 
 
 //logic to listen for connections and disconnections
@@ -130,8 +117,8 @@ io.on('connection', function (socket) {
   }); //end socket.on('disconnect')
 }); //end io.on('connection')
 
-server.listen(8081, function () {
-  console.log(`Listening on ${server.address().port}`);
+http.listen(8081, function () {
+  console.log('Server Started!');
 }); 
 
 
