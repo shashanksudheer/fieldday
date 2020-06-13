@@ -87,7 +87,7 @@ export default class Game extends Phaser.Scene {
     this.dealCards = (hand) => {
       for (let i = 0; i < 5; i++) {
         let playerCard = new Card(this);
-        playerCard.render(475 + (i * 100), 600, hand[i]);
+        playerCard.render(375 + (i * 200), 600, hand[i]);
       }
     }
 
@@ -104,9 +104,22 @@ export default class Game extends Phaser.Scene {
     })
 
     //zone creation
-    this.zone = new Zone(this);
-    this.dropZone = this.zone.renderZone();
-    this.outline = this.zone.renderOutline(this.dropZone);
+    this.zone1 = new Zone(this);
+    this.dropZone1 = this.zone1.renderZone(200, 210, 200, 300);
+    this.outline1 = this.zone1.renderOutline(this.dropZone1);
+
+    this.zone2 = new Zone(this);
+    this.dropZone2 = this.zone2.renderZone(500, 210, 200, 300);
+    this.outline2 = this.zone2.renderOutline(this.dropZone2);
+
+    this.zone3 = new Zone(this);
+    this.dropZone3 = this.zone3.renderZone(800, 210, 200, 300);
+    this.outline3 = this.zone3.renderOutline(this.dropZone3);
+
+    this.zone4 = new Zone(this);
+    this.dropZone4 = this.zone4.renderZone(1100, 210, 200, 300);
+    this.outline4 = this.zone4.renderOutline(this.dropZone4);
+
 
     this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
 
@@ -146,8 +159,8 @@ export default class Game extends Phaser.Scene {
 
     this.input.on('drop', function (pointer, gameObject, dropZone) {
       dropZone.data.values.cards++;
-      gameObject.x = (dropZone.x - 350) + (dropZone.data.values.cards * 50);
-      gameObject.y = dropZone.y;
+      gameObject.x = dropZone.x;
+      gameObject.y = dropZone.y - 50 + (dropZone.data.values.cards * 25);
       gameObject.disableInteractive();
     })
   } //end create()
