@@ -9,6 +9,9 @@ export default class Game extends Phaser.Scene {
       super({
           key: 'Game'
       });
+
+      //save hand information on client side
+      this.hand = [];
   }
 
   //function that preloads all required assets 
@@ -80,17 +83,28 @@ export default class Game extends Phaser.Scene {
     this.readyUp = this.add.text(75, 350, ['Ready Up']).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff').setInteractive();
     let self = this;
    
+    //when server sends dealHand message deal hand to client
     this.socket.on('dealHand', function(hand) {
       self.dealCards(hand);
     });
+
+    //when server sends message to refresh hand
+    this.socket.on('refreshHand', function() {
+      
+    });
     
+    //renders cards as hand on client page
     this.dealCards = (hand) => {
       for (let i = 0; i < 5; i++) {
-        let playerCard = new Card(this);
+        this.hand.push(hand[i]);
+        let playerCard = new Card(this, hand[i]);
+        playerCard.setName(hand[i], 375 + (i * 200), 600);
         playerCard.render(375 + (i * 200), 600, hand[i]);
       }
     }
 
+
+    //functions to deal with 'Ready Up' text
     this.readyUp.on('pointerdown', function () {
       self.socket.emit('readyUp');
     });
@@ -104,43 +118,28 @@ export default class Game extends Phaser.Scene {
     })
 
     //zone creation
-    this.zone1 = new Zone(this);
+    this.zone1 = new Zone(this, "s");
     this.dropZone1 = this.zone1.renderZone(200, 210, 200, 300);
     this.outline1 = this.zone1.renderOutline(this.dropZone1);
 
-    this.zone2 = new Zone(this);
+    this.zone2 = new Zone(this, "d");
     this.dropZone2 = this.zone2.renderZone(500, 210, 200, 300);
     this.outline2 = this.zone2.renderOutline(this.dropZone2);
 
-    this.zone3 = new Zone(this);
+    this.zone3 = new Zone(this, "c");
     this.dropZone3 = this.zone3.renderZone(800, 210, 200, 300);
     this.outline3 = this.zone3.renderOutline(this.dropZone3);
 
-    this.zone4 = new Zone(this);
+    this.zone4 = new Zone(this, "h");
     this.dropZone4 = this.zone4.renderZone(1100, 210, 200, 300);
     this.outline4 = this.zone4.renderOutline(this.dropZone4);
 
 
+    //card manipulation (dragging and such)
     this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
 
         gameObject.x = pointer.x;
         gameObject.y = pointer.y;
-
-    });
-
-    this.input.on('dragenter', function (pointer, gameObject, dropZone) {
-
-        graphics.clear();
-        graphics.lineStyle(2, 0x00ffff);
-        graphics.strokeRect(zone.x - zone.input.hitArea.width / 2, zone.y - zone.input.hitArea.height / 2, zone.input.hitArea.width, zone.input.hitArea.height);
-
-    });
-
-    this.input.on('dragleave', function (pointer, gameObject, dropZone) {
-
-        graphics.clear();
-        graphics.lineStyle(2, 0xffff00);
-        graphics.strokeRect(zone.x - zone.input.hitArea.width / 2, zone.y - zone.input.hitArea.height / 2, zone.input.hitArea.width, zone.input.hitArea.height);
 
     });
 
@@ -162,10 +161,15 @@ export default class Game extends Phaser.Scene {
       gameObject.x = dropZone.x;
       gameObject.y = dropZone.y - 50 + (dropZone.data.values.cards * 25);
       gameObject.disableInteractive();
+
+      //when card is dropped update server to add the card to pile object
+        //gameObject.texture.key holds the name of the texture (string representation of card)
+        //dropZone.name holds the pile name
+      self.socket.emit('cardPlayed', gameObject.texture.key, dropZone.name);
     })
   } //end create()
 
   update() {
-  
+    
   }
 }

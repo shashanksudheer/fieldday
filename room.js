@@ -15,10 +15,10 @@ class Room {
         ];
 
         //pile data holds arrays of cards in piles
-        this.pile1 = [];
-        this.pile2 = [];
-        this.pile3 = [];
-        this.pile4 = [];
+        this.s = [];
+        this.d = [];
+        this.h = [];
+        this.c = [];
 
         //discarded cards are held in this array
         this.discard = [];

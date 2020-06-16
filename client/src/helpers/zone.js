@@ -1,8 +1,9 @@
 export default class Zone {
-    constructor(scene) {
+    constructor(scene, name) {
         this.renderZone = (x, y, width, height) => {
             let dropZone = scene.add.zone(x, y, width, height).setRectangleDropZone(width, height);
             dropZone.setData({ cards: 0 });
+            dropZone.name = name;
             return dropZone;
         };
         this.renderOutline = (dropZone) => {

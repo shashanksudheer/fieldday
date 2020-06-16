@@ -15,6 +15,9 @@ var rooms = [];
 /* --------------------- ROUTES --------------------------------- */
 
 
+
+/* --------------------- SOCKET --------------------------------- */
+
 //logic to listen for connections and disconnections
 io.on('connection', function (socket) {
 
@@ -94,6 +97,40 @@ io.on('connection', function (socket) {
         io.to(player.socket_id).emit('dealHand', players[player.socket_id].hand);
       }
     }
+  });
+
+  //when a card is played update the room data to show the changes in the pile
+  socket.on('cardPlayed', function(card, pile) {
+    //if in spades pile
+    if (pile == "s") {
+      myRoom.s.push(card);
+    }
+    //if in diamonds pile
+    else if (pile == "d") {
+      myRoom.d.push(card);
+    }
+    //if in hearts pile
+    else if (pile =="h") {
+      myRoom.h.push(card);
+    }
+    //if in clubs pile
+    else if (pile =="c") {
+      myRoom.c.push(card);
+    }
+
+    //remove the card from the players hand
+    const ind = players[socket.id].hand.indexOf(card);
+    players[socket.id].hand.splice(ind, 1);
+
+
+    //add a new card to the players hand from the deck
+    if (myRoom.deck.length > 0) {
+      players[socket.id].hand.push(myRoom.deck.shift());
+
+      //redisplay cards on the clients screen
+      io.to(socket.id).emit('refreshHand', players[socket.id].hand);
+      io.to(socket.id).emit('dealHand', players[socket.id].hand);
+    } 
   });
 
   //What to do when a user disconnects
