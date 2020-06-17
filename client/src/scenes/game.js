@@ -72,6 +72,9 @@ export default class Game extends Phaser.Scene {
       this.load.image('13d', 'src/assets/13d.png');
       this.load.image('13h', 'src/assets/13h.png');
       this.load.image('13s', 'src/assets/13s.png');
+
+      //Highlighted Card images
+      this.load.image('1cH', 'src/assets/1cH.png');
   }
 
   //method that renders all the information as required
@@ -102,7 +105,6 @@ export default class Game extends Phaser.Scene {
         playerCard.render(375 + (i * 200), 600, hand[i]);
       }
     }
-
 
     //functions to deal with 'Ready Up' text
     this.readyUp.on('pointerdown', function () {
@@ -136,6 +138,7 @@ export default class Game extends Phaser.Scene {
 
 
     //card manipulation (dragging and such)
+
     this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
 
         gameObject.x = pointer.x;
@@ -146,20 +149,35 @@ export default class Game extends Phaser.Scene {
     this.input.on('dragstart', function (pointer, gameObject) {
       gameObject.setTint(0xff69b4);
       self.children.bringToTop(gameObject);
+      gameObject.setTexture("1cH");
+      gameObject.setScale(0.17, 0.17);
+
+      //Debug
+      console.log(gameObject);
+      console.log(gameObject.texture.get());
+  
     })
 
     this.input.on('dragend', function (pointer, gameObject, dropped) {
+
       gameObject.setTint();
       if (!dropped) {
           gameObject.x = gameObject.input.dragStartX;
           gameObject.y = gameObject.input.dragStartY;
       }
+      gameObject.setTexture("1c");
+      
+      // ***** KNOWN BUG: If you drop back into hand, it does not go back to 0.15 scale. If set to 0.15, then it
+      // ***** overrides the 'drop' and does not scale card dodwn to 0.10
+      gameObject.setScale(0.10, 0.10);
+
     })
 
     this.input.on('drop', function (pointer, gameObject, dropZone) {
       dropZone.data.values.cards++;
       gameObject.x = dropZone.x;
       gameObject.y = dropZone.y - 50 + (dropZone.data.values.cards * 25);
+      gameObject.setScale(0.10, 0.10);
       gameObject.disableInteractive();
 
       //when card is dropped update server to add the card to pile object
