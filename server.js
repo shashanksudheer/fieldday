@@ -129,7 +129,6 @@ io.on('connection', function (socket) {
 
       //redisplay cards on the clients screen
       io.to(socket.id).emit('refreshHand', players[socket.id].hand);
-      io.to(socket.id).emit('dealHand', players[socket.id].hand);
     } 
   });
 

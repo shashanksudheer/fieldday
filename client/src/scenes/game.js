@@ -83,7 +83,7 @@ export default class Game extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('rgba(229, 229, 229, 1)');
 
     this.socket = io('http://localhost:8081');
-    this.readyUp = this.add.text(75, 350, ['Ready Up']).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff').setInteractive();
+    this.readyUp = this.add.text(window.innerWidth/2, 400, ['Ready Up']).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff').setInteractive();
     let self = this;
    
     //when server sends dealHand message deal hand to client
@@ -91,18 +91,21 @@ export default class Game extends Phaser.Scene {
       self.dealCards(hand);
     });
 
+    //creating a group for the hand
+    var handGroup = this.add.group();
+
     //when server sends message to refresh hand
-    this.socket.on('refreshHand', function() {
-      
+    this.socket.on('refreshHand', function(hand) {
+      handGroup.clear(true, true);
+      self.dealCards(hand);
     });
-    
+
     //renders cards as hand on client page
     this.dealCards = (hand) => {
       for (let i = 0; i < 5; i++) {
         this.hand.push(hand[i]);
-        let playerCard = new Card(this, hand[i]);
-        playerCard.setName(hand[i], 375 + (i * 200), 600);
-        playerCard.render(375 + (i * 200), 600, hand[i]);
+        let card = handGroup.create(375 + (i * 200), 600, hand[i]).setScale(0.15, 0.15).setInteractive();
+        this.input.setDraggable(card);
       }
     }
 
@@ -147,25 +150,23 @@ export default class Game extends Phaser.Scene {
     });
 
     this.input.on('dragstart', function (pointer, gameObject) {
-      gameObject.setTint(0xff69b4);
+
       self.children.bringToTop(gameObject);
-      gameObject.setTexture("1cH");
+      gameObject.setTexture(gameObject.texture.key);
       gameObject.setScale(0.17, 0.17);
 
-      //Debug
-      console.log(gameObject);
-      console.log(gameObject.texture.get());
-  
+      //when a card is selected send a request to server to figure out which piles the card can be played on
+      self.socket.emit('checkPiles', gameObject.texture.key);
     })
 
     this.input.on('dragend', function (pointer, gameObject, dropped) {
 
-      gameObject.setTint();
       if (!dropped) {
           gameObject.x = gameObject.input.dragStartX;
           gameObject.y = gameObject.input.dragStartY;
       }
-      gameObject.setTexture("1c");
+
+      gameObject.setTexture(gameObject.texture.key);
       
       // ***** KNOWN BUG: If you drop back into hand, it does not go back to 0.15 scale. If set to 0.15, then it
       // ***** overrides the 'drop' and does not scale card dodwn to 0.10
@@ -177,13 +178,17 @@ export default class Game extends Phaser.Scene {
       dropZone.data.values.cards++;
       gameObject.x = dropZone.x;
       gameObject.y = dropZone.y - 50 + (dropZone.data.values.cards * 25);
+
       gameObject.setScale(0.10, 0.10);
       gameObject.disableInteractive();
+
+      handGroup.remove(gameObject);
 
       //when card is dropped update server to add the card to pile object
         //gameObject.texture.key holds the name of the texture (string representation of card)
         //dropZone.name holds the pile name
       self.socket.emit('cardPlayed', gameObject.texture.key, dropZone.name);
+
     })
   } //end create()
 
