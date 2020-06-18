@@ -104,7 +104,16 @@ export default class Game extends Phaser.Scene {
     this.dealCards = (hand) => {
       for (let i = 0; i < 5; i++) {
         this.hand.push(hand[i]);
-        let card = handGroup.create(375 + (i * 200), 600, hand[i]).setScale(0.15, 0.15).setInteractive();
+        let card = handGroup.create(375 + (i * 200), 600, hand[i]).setScale(0.2, 0.2).setInteractive();
+        
+        //hover functions
+        card.on('pointerover', function() {
+          card.y -= 20;
+        });
+        card.on('pointerout', function() {
+          card.y += 20;
+        });
+
         this.input.setDraggable(card);
       }
     }
@@ -193,6 +202,6 @@ export default class Game extends Phaser.Scene {
   } //end create()
 
   update() {
-    
+     
   }
 }
