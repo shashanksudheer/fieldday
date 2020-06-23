@@ -1,5 +1,4 @@
 import io from 'socket.io-client';
-import Card from '../helpers/card.js';
 import Zone from '../helpers/zone.js';
 
 //a phaser scene allows for having mutliple different 'pages' that can be separate from one another
@@ -77,6 +76,12 @@ export default class Game extends Phaser.Scene {
       this.load.image('pileTop', 'src/assets/game-objects/Rectangle 8.png');
       this.load.image('scoreboard', 'src/assets/game-objects/Rectangle 7.png');
 
+      //loading betting sprites
+      this.load.image('white', 'src/assets/chips/white.png');
+      this.load.image('seven', 'src/assets/chips/seven.png');
+      this.load.image('pope', 'src/assets/chips/pope.png');
+      this.load.image('joker', 'src/assets/chips/joker.png');
+
       //Highlighted Card images
       this.load.image('1cH', 'src/assets/1cH.png');
 
@@ -95,6 +100,7 @@ export default class Game extends Phaser.Scene {
    
     //when server sends dealHand message deal hand to client
     this.socket.on('dealHand', function(hand) {
+
       self.dealCards(hand);
     });
 
@@ -125,14 +131,20 @@ export default class Game extends Phaser.Scene {
       }
     };
 
+    //dislay betting chips
+    this.add.sprite(75, 600, 'white').setScale(2, 2).setInteractive();
+    this.add.sprite(75, 500, 'joker').setScale(2.3, 2.3).setInteractive();
+    this.add.sprite(75, 800, 'pope').setScale(2, 2).setInteractive();
+    this.add.sprite(75, 700, 'seven').setScale(2, 2).setInteractive(); 
+
     this.scoreboard = this.add.sprite(1405, 765, 'scoreboard').setScale(2.5, 2.5);
 
     var readyUp = this.add.group();
 
-    var readyBox = this.add.sprite(1400, 600, 'ready').setScale(2, 2).setAlpha(0.9);
+    var readyBox = this.add.sprite(1400, 610, 'ready').setScale(2, 2).setAlpha(0.9);
 
     //ready up button creation
-    this.ready = this.add.text(1372, 590, ['READY']).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff').setInteractive();
+    this.ready = this.add.text(1372, 600, ['READY']).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff').setInteractive();
 
     readyUp.add(readyBox);
     readyUp.add(this.ready);
@@ -150,30 +162,39 @@ export default class Game extends Phaser.Scene {
       self.ready.setColor('#00ffff');
     });
 
-
-    var rect = this.add.rectangle(1400, 300, 300, 500, 0x000000).setAlpha(0.7);
+    //chat box
+    var rect = this.add.rectangle(1400, 300, 300, 535, 0x000000).setAlpha(0.7);
 
     //zone creation
     this.zone1 = new Zone(this, "s");
-    this.dropZone1 = this.zone1.renderZone(300, 230, 200, 300);
-    this.outline1 = this.zone1.renderOutline(this.dropZone1);
+    this.dropZone1 = this.zone1.renderZone(300, 240, 200, 300);
+    //this.outline1 = this.zone1.renderOutline(this.dropZone1);
+    this.pileTop1 = this.add.image(300, 50, 'pileTop').setScale(2.2, 2.2).setAlpha(0.8);
 
     this.zone2 = new Zone(this, "d");
-    this.dropZone2 = this.zone2.renderZone(550, 230, 200, 300);
-    this.outline2 = this.zone2.renderOutline(this.dropZone2);
+    this.dropZone2 = this.zone2.renderZone(550, 240, 200, 300);
+    //this.outline2 = this.zone2.renderOutline(this.dropZone2);
+    this.pileTop2 = this.add.image(550, 50, 'pileTop').setScale(2.2, 2.2).setAlpha(0.8);
 
     this.zone3 = new Zone(this, "c");
-    this.dropZone3 = this.zone3.renderZone(800, 230, 200, 300);
-    this.outline3 = this.zone3.renderOutline(this.dropZone3);
+    this.dropZone3 = this.zone3.renderZone(800, 240, 200, 300);
+    //this.outline3 = this.zone3.renderOutline(this.dropZone3);
+    this.pileTop3 = this.add.image(800, 50, 'pileTop').setScale(2.2, 2.2).setAlpha(0.8);
 
     this.zone4 = new Zone(this, "h");
-    this.dropZone4 = this.zone4.renderZone(1050, 230, 200, 300);
-    this.outline4 = this.zone4.renderOutline(this.dropZone4);
+    this.dropZone4 = this.zone4.renderZone(1050, 240, 200, 300);
+    //this.outline4 = this.zone4.renderOutline(this.dropZone4);
+    this.pileTop4 = this.add.image(1050, 50, 'pileTop').setScale(2.2, 2.2).setAlpha(0.8);
 
+
+    //make sure to refresh pile numbers on top
+    var refreshPileTopNums = function() {
+      var p1pts = self.dropZone1.data.values.cards;
+      self.add.text(290, 45, p1pts).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff');
+    }
 
     //*** CARD MANIPULATION (dragging and such)
     this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-
         gameObject.x = pointer.x;
         gameObject.y = pointer.y;
 
@@ -208,6 +229,8 @@ export default class Game extends Phaser.Scene {
     this.input.on('drop', function (pointer, gameObject, dropZone) {
       //update the number of cards in pile to calculate offset dynamically
       dropZone.data.values.cards++;
+
+      //refreshPileTopNums();
 
       //set the pile to be centered horizontally and near the top of the zone 
       gameObject.x = dropZone.x;

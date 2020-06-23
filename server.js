@@ -69,8 +69,7 @@ io.on('connection', function (socket) {
     }
   }
 
-  //if the room is full, start game
-  if (myRoom.players.length >= 2) {  }
+  //myRoom.joinMessage(players[socket.id]);
   
   /*
   // send the players object to the player
