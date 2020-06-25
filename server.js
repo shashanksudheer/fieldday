@@ -27,7 +27,6 @@ io.on('connection', function (socket) {
   //DEBUG
   console.log(newPlayer.name + " connected");
 
-
   //check to see if a room exists with a slot for the player
   var myRoom = null;
   var roomFound = false;
@@ -78,6 +77,14 @@ io.on('connection', function (socket) {
   });
   */
 
+  //set the players name
+  socket.on('setName', function(name) {
+    players[socket.id].name = name;
+    for (var player of myRoom.players) {
+      //send name information of every player to client
+      io.to(player.socket_id).emit('displayBoard', myRoom.getPlayerNames());
+    }
+  });
 
   //check to see if all players are ready and start the game
   socket.on('readyUp', function() {
@@ -92,7 +99,6 @@ io.on('connection', function (socket) {
       myRoom.startGame();
       //iterate through players in room and deal their specific hand to them
       for (var player of myRoom.players) {
-        console.log(players[player.socket_id].hand);
         io.to(player.socket_id).emit('dealHand', players[player.socket_id].hand);
       }
     }
@@ -129,6 +135,13 @@ io.on('connection', function (socket) {
       //redisplay cards on the clients screen
       io.to(socket.id).emit('refreshHand', players[socket.id].hand);
     } 
+  });
+
+
+  //calculation to determine which piles a card can be placed on
+  socket.on('checkPiles', function(card) {
+    console.log(myRoom.ruleCheck(card));
+    io.to(socket.id).emit('checkPiles', myRoom.ruleCheck(card));
   });
 
   //What to do when a user disconnects

@@ -82,11 +82,19 @@ export default class Game extends Phaser.Scene {
       this.load.image('pope', 'src/assets/chips/pope.png');
       this.load.image('joker', 'src/assets/chips/joker.png');
 
+      //loading pile top card suits
+      this.load.image('heart', 'src/assets/game-objects/heart.png');
+      this.load.image('spade', 'src/assets/game-objects/spade.png');
+      this.load.image('club', 'src/assets/game-objects/club.png');
+      this.load.image('diamond', 'src/assets/game-objects/diamond.png');
+
       //Highlighted Card images
       this.load.image('1cH', 'src/assets/1cH.png');
 
       //ready button rectangle
       this.load.image('ready', 'src/assets/game-objects/readyBtn.png');
+
+      this.load.html('nameform', 'src/assets/text/nameform.html');
   };
 
   //method that essentially runs the game and renders all graphics
@@ -97,10 +105,328 @@ export default class Game extends Phaser.Scene {
     
     //allow a reference to the scene.
     let self = this;
-   
+
+    //chat box
+    var rect = this.add.rectangle(1400, 300, 300, 535, 0x000000).setAlpha(0.7);
+    
+    var pileCheck;
+
+    //zone creation
+    const pileX = 300;
+    const pileY = 260;
+    const pileW = 200;
+    const pileL = 300;
+
+    this.zone1 = new Zone(this, "s");
+    this.dropZone1 = this.zone1.renderZone(pileX, pileY, pileW, pileL).disableInteractive();
+    //this.outline1 = this.zone1.renderOutline(this.dropZone1);
+    this.pileTop1 = this.add.image(300, 50, 'pileTop').setScale(0.7, 0.7);
+    this.pileSuit1 = this.add.image(300, 50, 'spade').setScale(0.17, 0.17).setTint(0x000000).setAlpha(0.3);
+
+    this.zone2 = new Zone(this, "d");
+    this.dropZone2 = this.zone2.renderZone(pileX + 250, pileY, pileW, pileL).disableInteractive();
+    //this.outline2 = this.zone2.renderOutline(this.dropZone2);
+    this.pileTop2 = this.add.image(550, 50, 'pileTop').setScale(0.7, 0.7);
+    this.pileSuit2 = this.add.image(550, 50, 'diamond').setScale(0.17, 0.17).setTint(0x000000).setAlpha(0.3);
+
+    this.zone3 = new Zone(this, "c");
+    this.dropZone3 = this.zone3.renderZone(pileX + 500, pileY, pileW, pileL).disableInteractive();
+    //this.outline3 = this.zone3.renderOutline(this.dropZone3);
+    this.pileTop3 = this.add.image(800, 50, 'pileTop').setScale(0.7, 0.7).setAlpha(0.8);
+    this.pileSuit1 = this.add.image(800, 50, 'club').setScale(0.2, 0.2).setTint(0x000000).setAlpha(0.3);
+
+    this.zone4 = new Zone(this, "h");
+    this.dropZone4 = this.zone4.renderZone(pileX + 750, pileY, pileW, pileL).disableInteractive();
+    //this.outline4 = this.zone4.renderOutline(this.dropZone4);
+    this.pileTop4 = this.add.image(1050, 50, 'pileTop').setScale(0.7, 0.7).setAlpha(0.8);
+    this.pileSuit1 = this.add.image(1050, 50, 'heart').setScale(0.2, 0.2).setTint(0x000000).setAlpha(0.3);
+
+    
+    //section of code to deal with displaying names on the scoreboard
+    var nameGroup = this.add.group();
+
+    this.socket.on('displayBoard', function(nameArr) {
+      var y = 675;
+      var i = 0;
+      nameGroup.clear(true, true);
+      for (var name of nameArr) {
+        var newName = self.add.text(1300, y + i, name); //.setFontSize(28).setFontFamily('Nunito').setColor('#FDFDFF');
+        newName.setStyle({
+          fontSize: '28px',
+          fontFamily: 'Nunito',
+          fontStyle: '600',
+        });
+        nameGroup.add(newName);
+        i += 45;
+      }
+    });
+
+
+    //display betting chips
+    this.add.sprite(75, 600, 'white').setScale(0.3, 0.3).setInteractive();
+    this.add.sprite(75, 500, 'joker').setScale(0.3, 0.3).setInteractive();
+    this.add.sprite(75, 800, 'pope').setScale(0.3, 0.3).setInteractive();
+    this.add.sprite(75, 700, 'seven').setScale(0.3, 0.3).setInteractive(); 
+
+    this.scoreboard = this.add.sprite(1405, 765, 'scoreboard').setScale(2.5, 2.5);
+
+    //ready up button creation
+    var readyCreate = () => {
+      var readyUp = this.add.group();
+
+      var readyBox = this.add.sprite(1400, 610, 'ready').setScale(2, 2).setAlpha(0.9);
+      this.ready = this.add.text(1360, 597, ['READY']).setInteractive(); //.setFontSize(18).setFontFamily('Nunito').setColor('#DDFFE6').setInteractive();
+      this.ready.setStyle({
+        fontSize: '24px',
+        fontFamily: 'Nunito',
+        fontStyle: '700',
+        color: '#DDFFE6',
+      }); 
+
+      readyUp.add(readyBox);
+      readyUp.add(this.ready);
+
+      //functions to deal with 'Ready Up' button interactiveness
+      this.ready.on('pointerdown', function () {
+        self.socket.emit('readyUp');
+      });
+
+      this.ready.on('pointerover', function () {
+        self.ready.setColor('#b8d6c0');
+      });
+
+      this.ready.on('pointerout', function () {
+        self.ready.setColor('#DDFFE6');
+      });
+
+      return this.ready;
+    }
+
+    var readyButton = readyCreate().disableInteractive();
+
+    //Add name input field as HTML DOM element
+    var nameSetter = this.add.dom(700, 300).createFromCache('nameform');
+    nameSetter.addListener('click');
+    nameSetter.on('click', function (event) {
+      if (event.target.name === 'playButton') {
+          var inputText = this.getChildByName('nameField');
+          //  Have they entered anything?
+          if (inputText.value !== '') {
+              //  Turn off the click events
+              this.removeListener('click');
+
+              //  Hide the login element
+              this.setVisible(false);
+              self.socket.emit('setName', inputText.value);
+              readyButton.setInteractive();
+          }
+      }
+    });
+     
+    //make sure to refresh pile numbers on top
+    var refreshPileTopNums = function() {
+      var p1pts = self.dropZone1.data.values.cards;
+      self.add.text(290, 45, p1pts).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff');
+    }
+
+    //*** CARD MANIPULATION (dragging and such)
+    this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
+      gameObject.x = pointer.x;
+      gameObject.y = pointer.y;
+
+      //wait for response from server
+      if (pileCheck == 1) {
+        self.pileTop1.setAlpha(1);
+        self.pileTop2.setAlpha(0.2);
+        self.pileTop3.setAlpha(0.2);
+        self.pileTop4.setAlpha(0.2);
+        
+        self.dropZone1.setInteractive();
+      }
+      else if (pileCheck == 2) {
+        self.pileTop1.setAlpha(0.2);
+        self.pileTop2.setAlpha(1);
+        self.pileTop3.setAlpha(0.2);
+        self.pileTop4.setAlpha(0.2);
+
+        self.dropZone2.setInteractive();
+      }
+      else if (pileCheck == 3) {
+        self.pileTop1.setAlpha(0.2);
+        self.pileTop2.setAlpha(0.2);
+        self.pileTop3.setAlpha(1);
+        self.pileTop4.setAlpha(0.2);
+
+        self.dropZone3.setInteractive();
+      }
+      else if (pileCheck == 4) {
+        self.pileTop1.setAlpha(0.2);
+        self.pileTop2.setAlpha(0.2);
+        self.pileTop3.setAlpha(0.2);
+        self.pileTop4.setAlpha(1);
+
+        self.dropZone4.setInteractive();
+      }  
+
+    });//end on drag
+
+    this.input.on('dragstart', function (pointer, gameObject) {
+      self.children.bringToTop(gameObject);
+      gameObject.setTexture(gameObject.texture.key);
+      //when a card is selected send a request to server to figure out which piles the card can be played on
+      self.socket.emit('checkPiles', gameObject.texture.key);
+      
+      //wait for response from server
+      if (pileCheck == 1) {
+
+        //highlight the pile tops
+        self.pileTop1.setAlpha(1);
+        self.pileTop2.setAlpha(0.2);
+        self.pileTop3.setAlpha(0.2);
+        self.pileTop4.setAlpha(0.2);
+
+        self.dropZone2.disableInteractive();
+        self.dropZone3.disableInteractive();
+        self.dropZone4.disableInteractive();
+      }
+      else if (pileCheck == 2) {
+
+        //highlight the pile tops
+        self.pileTop1.setAlpha(0.2);
+        self.pileTop2.setAlpha(1);
+        self.pileTop3.setAlpha(0.2);
+        self.pileTop4.setAlpha(0.2);
+
+        self.dropZone1.disableInteractive();
+        self.dropZone3.disableInteractive();
+        self.dropZone4.disableInteractive();
+      }
+      else if (pileCheck == 3) {
+
+        //highlight the pile tops
+        self.pileTop1.setAlpha(0.2);
+        self.pileTop2.setAlpha(0.2);
+        self.pileTop3.setAlpha(1);
+        self.pileTop4.setAlpha(0.2);
+
+        self.dropZone1.disableInteractive();
+        self.dropZone2.disableInteractive();
+        self.dropZone4.disableInteractive();
+      }
+      else if (pileCheck == 4) {
+        
+        //highlight the pile tops
+        self.pileTop1.setAlpha(0.2);
+        self.pileTop2.setAlpha(0.2);
+        self.pileTop3.setAlpha(0.2);
+        self.pileTop4.setAlpha(1);
+
+        self.dropZone1.disableInteractive();
+        self.dropZone2.disableInteractive();
+        self.dropZone3.disableInteractive();
+      }
+      
+    });//end on dragstart
+
+    //when the card is hovered over the dropzone, make it interactive if it is hovering over the right pile
+    this.input.on('dragenter', function(pointer, gameObject, dropZone) {
+      if (pileCheck == 1 && dropZone.name == 's') {}
+      else if (pileCheck == 2 && dropZone.name == 'd') {}
+      else if (pileCheck == 3 && dropZone.name == 'c') {}
+      else if (pileCheck == 4 && dropZone.name == 'h') {}
+    });//end dragenter
+
+    this.input.on('dragleave', function(point, gameObject, dropZone) {
+    });
+
+    this.input.on('dragend', function (pointer, gameObject, dropped) {
+
+      gameObject.setTexture(gameObject.texture.key);
+
+      //if the card is dropped outside of the dropzone reset it to its original place
+      if (!dropped) {
+          gameObject.x = gameObject.input.dragStartX;
+          gameObject.y = gameObject.input.dragStartY;
+          gameObject.setScale(0.235, 0.235);
+      }
+
+      else {
+        //if the object has been dropped
+        gameObject.setScale(0.17, 0.17);
+      }
+      
+      //reset opacity of all pileTops
+      self.pileTop1.setAlpha(1);
+      self.pileTop2.setAlpha(1);
+      self.pileTop3.setAlpha(1);
+      self.pileTop4.setAlpha(1);
+
+      // //make all dropZones interactive again
+      // self.dropZone1.setInteractive();
+      // self.dropZone2.setInteractive();
+      // self.dropZone3.setInteractive();
+      // self.dropZone4.setInteractive();
+
+    });//end on dragend
+
+    this.input.on('drop', function (pointer, gameObject, dropZone) {
+      //update the number of cards in pile to calculate offset dynamically
+      dropZone.data.values.cards++;
+
+      //refreshPileTopNums();
+
+      //set the pile to be centered horizontally and near the top of the zone 
+      gameObject.x = dropZone.x;
+      gameObject.y = dropZone.y - 100 + (dropZone.data.values.cards * 25);
+
+      //make the card smaller and make it a static object
+      gameObject.disableInteractive();
+
+      //remove the current card from the group (probably not required)
+      handGroup.remove(gameObject);
+
+      // //wait for response from server
+      // if (pileCheck == 1) {
+       
+      //   //disable dropZones
+      //   self.dropZone2.disableInteractive();
+      //   self.dropZone3.disableInteractive();
+      //   self.dropZone4.disableInteractive();
+      // }
+      // else if (pileCheck == 2) {
+
+      //   //disable dropZones
+      //   self.dropZone1.disableInteractive();
+      //   self.dropZone3.disableInteractive();
+      //   self.dropZone4.disableInteractive();
+      // }
+      // else if (pileCheck == 3) {
+      
+      //   //disable dropZones
+      //   self.dropZone1.disableInteractive();
+      //   self.dropZone2.disableInteractive();
+      //   self.dropZone4.disableInteractive();
+      // }
+      // else if (pileCheck == 4) {
+        
+      //   //disable dropZones
+      //   self.dropZone1.disableInteractive();
+      //   self.dropZone2.disableInteractive();
+      //   self.dropZone3.disableInteractive();
+      // }
+
+      //when card is dropped update server to add the card to pile object
+        //gameObject.texture.key holds the name of the texture (string representation of card)
+        //dropZone.name holds the pile name
+      self.socket.emit('cardPlayed', gameObject.texture.key, dropZone.name);
+    }); //end drop
+
+
+
+    /* ------------------------------ SOCKET HANDLERS --------------------------------------- */
+
     //when server sends dealHand message deal hand to client
     this.socket.on('dealHand', function(hand) {
-
       self.dealCards(hand);
     });
 
@@ -131,122 +457,9 @@ export default class Game extends Phaser.Scene {
       }
     };
 
-    //dislay betting chips
-    this.add.sprite(75, 600, 'white').setScale(2, 2).setInteractive();
-    this.add.sprite(75, 500, 'joker').setScale(2.3, 2.3).setInteractive();
-    this.add.sprite(75, 800, 'pope').setScale(2, 2).setInteractive();
-    this.add.sprite(75, 700, 'seven').setScale(2, 2).setInteractive(); 
-
-    this.scoreboard = this.add.sprite(1405, 765, 'scoreboard').setScale(2.5, 2.5);
-
-    var readyUp = this.add.group();
-
-    var readyBox = this.add.sprite(1400, 610, 'ready').setScale(2, 2).setAlpha(0.9);
-
-    //ready up button creation
-    this.ready = this.add.text(1372, 600, ['READY']).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff').setInteractive();
-
-    readyUp.add(readyBox);
-    readyUp.add(this.ready);
-
-    //functions to deal with 'Ready Up' button interactiveness
-    this.ready.on('pointerdown', function () {
-      self.socket.emit('readyUp');
+    this.socket.on('checkPiles', function (piles) {
+      pileCheck = piles;
     });
-
-    this.ready.on('pointerover', function () {
-      self.ready.setColor('#ff69b4');
-    });
-
-    this.ready.on('pointerout', function () {
-      self.ready.setColor('#00ffff');
-    });
-
-    //chat box
-    var rect = this.add.rectangle(1400, 300, 300, 535, 0x000000).setAlpha(0.7);
-
-    //zone creation
-    this.zone1 = new Zone(this, "s");
-    this.dropZone1 = this.zone1.renderZone(300, 240, 200, 300);
-    //this.outline1 = this.zone1.renderOutline(this.dropZone1);
-    this.pileTop1 = this.add.image(300, 50, 'pileTop').setScale(2.2, 2.2).setAlpha(0.8);
-
-    this.zone2 = new Zone(this, "d");
-    this.dropZone2 = this.zone2.renderZone(550, 240, 200, 300);
-    //this.outline2 = this.zone2.renderOutline(this.dropZone2);
-    this.pileTop2 = this.add.image(550, 50, 'pileTop').setScale(2.2, 2.2).setAlpha(0.8);
-
-    this.zone3 = new Zone(this, "c");
-    this.dropZone3 = this.zone3.renderZone(800, 240, 200, 300);
-    //this.outline3 = this.zone3.renderOutline(this.dropZone3);
-    this.pileTop3 = this.add.image(800, 50, 'pileTop').setScale(2.2, 2.2).setAlpha(0.8);
-
-    this.zone4 = new Zone(this, "h");
-    this.dropZone4 = this.zone4.renderZone(1050, 240, 200, 300);
-    //this.outline4 = this.zone4.renderOutline(this.dropZone4);
-    this.pileTop4 = this.add.image(1050, 50, 'pileTop').setScale(2.2, 2.2).setAlpha(0.8);
-
-
-    //make sure to refresh pile numbers on top
-    var refreshPileTopNums = function() {
-      var p1pts = self.dropZone1.data.values.cards;
-      self.add.text(290, 45, p1pts).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff');
-    }
-
-    //*** CARD MANIPULATION (dragging and such)
-    this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-        gameObject.x = pointer.x;
-        gameObject.y = pointer.y;
-
-    });//end on drag
-
-    this.input.on('dragstart', function (pointer, gameObject) {
-      self.children.bringToTop(gameObject);
-      gameObject.setTexture(gameObject.texture.key);
-      //when a card is selected send a request to server to figure out which piles the card can be played on
-      self.socket.emit('checkPiles', gameObject.texture.key);
-    });//end on dragstart
-
-    this.input.on('dragend', function (pointer, gameObject, dropped) {
-
-      gameObject.setTexture(gameObject.texture.key);
-
-      //if the card is dropped outside of the dropzone reset it to its original place
-      if (!dropped) {
-          gameObject.x = gameObject.input.dragStartX;
-          gameObject.y = gameObject.input.dragStartY;
-          gameObject.setScale(0.235, 0.235);
-      }
-
-      else {
-        //if the object has been dropped
-        gameObject.setScale(0.15, 0.15);
-      }
-      
-
-    });//end on dragend
-
-    this.input.on('drop', function (pointer, gameObject, dropZone) {
-      //update the number of cards in pile to calculate offset dynamically
-      dropZone.data.values.cards++;
-
-      //refreshPileTopNums();
-
-      //set the pile to be centered horizontally and near the top of the zone 
-      gameObject.x = dropZone.x;
-      gameObject.y = dropZone.y - 100 + (dropZone.data.values.cards * 25);
-
-      //make the card smaller and make it a static object
-      gameObject.disableInteractive();
-
-      //remove the current card from the group (probably not required)
-      handGroup.remove(gameObject);
-
-      //when card is dropped update server to add the card to pile object
-        //gameObject.texture.key holds the name of the texture (string representation of card)
-        //dropZone.name holds the pile name
-      self.socket.emit('cardPlayed', gameObject.texture.key, dropZone.name);
-    }); //end drop
 
   } //end create()
 

@@ -12,7 +12,10 @@ const config = {
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: 1600,
         height: 900,
-    }
+    },
+    dom: {
+        createContainer: true
+    },
 };
 
 const game = new Phaser.Game(config);
