@@ -89,7 +89,61 @@ export default class Game extends Phaser.Scene {
       this.load.image('diamond', 'src/assets/game-objects/diamond.png');
 
       //Highlighted Card images
-      this.load.image('1cH', 'src/assets/1cH.png');
+      this.load.image('0pH', 'src/assets/cardsH/0pH.png');
+      this.load.image('1cH', 'src/assets/cardsH/1cH.png');
+      this.load.image('1dH', 'src/assets/cardsH/1dH.png');
+      this.load.image('1hH', 'src/assets/cardsH/1hH.png');
+      this.load.image('1jH', 'src/assets/cardsH/1jH.png');
+      this.load.image('1sH', 'src/assets/cardsH/1sH.png');
+      this.load.image('2cH', 'src/assets/cardsH/2cH.png');
+      this.load.image('2dH', 'src/assets/cardsH/2dH.png');
+      this.load.image('2hH', 'src/assets/cardsH/2hH.png');
+      this.load.image('2jH', 'src/assets/cardsH/2jH.png');
+      this.load.image('2sH', 'src/assets/cardsH/2sH.png');
+      this.load.image('3cH', 'src/assets/cardsH/3cH.png');
+      this.load.image('3dH', 'src/assets/cardsH/3dH.png');
+      this.load.image('3hH', 'src/assets/cardsH/3hH.png');
+      this.load.image('3sH', 'src/assets/cardsH/3sH.png');
+      this.load.image('4cH', 'src/assets/cardsH/4cH.png');
+      this.load.image('4dH', 'src/assets/cardsH/4dH.png');
+      this.load.image('4hH', 'src/assets/cardsH/4hH.png');
+      this.load.image('4sH', 'src/assets/cardsH/4sH.png');
+      this.load.image('5cH', 'src/assets/cardsH/5cH.png');
+      this.load.image('5dH', 'src/assets/cardsH/5dH.png');
+      this.load.image('5hH', 'src/assets/cardsH/5hH.png');
+      this.load.image('5sH', 'src/assets/cardsH/5sH.png');
+      this.load.image('6cH', 'src/assets/cardsH/6cH.png');
+      this.load.image('6dH', 'src/assets/cardsH/6dH.png');
+      this.load.image('6hH', 'src/assets/cardsH/6hH.png');
+      this.load.image('6sH', 'src/assets/cardsH/6sH.png');
+      this.load.image('7cH', 'src/assets/cardsH/7cH.png');
+      this.load.image('7dH', 'src/assets/cardsH/7dH.png');
+      this.load.image('7hH', 'src/assets/cardsH/7hH.png');
+      this.load.image('7sH', 'src/assets/cardsH/7sH.png');
+      this.load.image('8cH', 'src/assets/cardsH/8cH.png');
+      this.load.image('8dH', 'src/assets/cardsH/8dH.png');
+      this.load.image('8hH', 'src/assets/cardsH/8hH.png');
+      this.load.image('8sH', 'src/assets/cardsH/8sH.png');
+      this.load.image('9cH', 'src/assets/cardsH/9cH.png');
+      this.load.image('9dH', 'src/assets/cardsH/9dH.png');
+      this.load.image('9hH', 'src/assets/cardsH/9hH.png');
+      this.load.image('9sH', 'src/assets/cardsH/9sH.png');
+      this.load.image('10cH', 'src/assets/cardsH/10cH.png');
+      this.load.image('10dH', 'src/assets/cardsH/10dH.png');
+      this.load.image('10hH', 'src/assets/cardsH/10hH.png');
+      this.load.image('10sH', 'src/assets/cardsH/10sH.png');
+      this.load.image('11cH', 'src/assets/cardsH/11cH.png');
+      this.load.image('11dH', 'src/assets/cardsH/11dH.png');
+      this.load.image('11hH', 'src/assets/cardsH/11hH.png');
+      this.load.image('11sH', 'src/assets/cardsH/11sH.png');
+      this.load.image('12cH', 'src/assets/cardsH/12cH.png');
+      this.load.image('12dH', 'src/assets/cardsH/12dH.png');
+      this.load.image('12hH', 'src/assets/cardsH/12hH.png');
+      this.load.image('12sH', 'src/assets/cardsH/12sH.png');
+      this.load.image('13cH', 'src/assets/cardsH/13cH.png');
+      this.load.image('13dH', 'src/assets/cardsH/13dH.png');
+      this.load.image('13hH', 'src/assets/cardsH/13hH.png');
+      this.load.image('13sH', 'src/assets/cardsH/13sH.png');
 
       //ready button rectangle
       this.load.image('ready', 'src/assets/game-objects/readyBtn.png');
@@ -110,6 +164,9 @@ export default class Game extends Phaser.Scene {
     var rect = this.add.rectangle(1400, 300, 300, 535, 0x000000).setAlpha(0.7);
     
     var pileCheck;
+
+    //global variable to store current card being dragged & hovered
+    var cardKey;
 
     //zone creation
     const pileX = 300;
@@ -285,9 +342,9 @@ export default class Game extends Phaser.Scene {
 
     this.input.on('dragstart', function (pointer, gameObject) {
       self.children.bringToTop(gameObject);
-      gameObject.setTexture(gameObject.texture.key);
+      
       //when a card is selected send a request to server to figure out which piles the card can be played on
-      self.socket.emit('checkPiles', gameObject.texture.key);
+      self.socket.emit('checkPiles', cardKey);
       
       //wait for response from server
       if (pileCheck == 0) {
@@ -368,7 +425,6 @@ export default class Game extends Phaser.Scene {
 
     this.input.on('dragend', function (pointer, gameObject, dropped) {
 
-      gameObject.setTexture(gameObject.texture.key);
 
       //if the card is dropped outside of the dropzone reset it to its original place
       if (!dropped) {
@@ -436,9 +492,12 @@ export default class Game extends Phaser.Scene {
         //hover functions
         card.on('pointerover', function() {
           card.y -= 20;
+          cardKey = card.texture.key;
+          card.setTexture(cardKey+'H');
         });
         card.on('pointerout', function() {
           card.y += 20;
+          card.setTexture(cardKey);
         });
 
         this.input.setDraggable(card);
