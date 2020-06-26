@@ -104,8 +104,7 @@ class Room {
         return nameArr;
     }
 
-
-        
+       
     /*
         Main function that determines which pile a card can be placed on
         RETURNS
@@ -123,8 +122,10 @@ class Room {
     ruleCheck(s) {
         var card = {
             suit: s.slice(-1),
-            val: s.slice(0, -2)
+            val: s.substring(0, s.length - 1)
         };
+
+        console.log(card);
     
         //Check for spades 
         if (card.suit == 's') {
@@ -141,7 +142,7 @@ class Room {
                 return 1;
             } 
             //check to see if current card has value greater than card on top of pile
-            else if (card.val < this.s[this.s.length-1].val) {   
+            else if (card.val < this.s[this.s.length-1].substring(0, this.s[this.s.length-1].length-1)) {   
                 return 0;
             }
             return 1;
@@ -162,10 +163,10 @@ class Room {
                 return 4;
             } 
             //check to see if current card has value greater than card on top of pile
-            else if (card.val < this.h[this.h.length-1].val) {   
+            else if (card.val < this.h[this.h.length-1].substring(0, this.h[this.h.length-1].length-1)) {   
                 return 0;
             }
-            return 1;
+            return 4;
         }
     
         //check for diamonds
@@ -183,7 +184,7 @@ class Room {
                 return 2;
             } 
             //check to see if current card has value greater than card on top of pile
-            else if (card.val < this.d[this.d.length-1].val) {   
+            else if (card.val < this.d[this.d.length-1].substring(0, this.d[this.d.length-1].length-1)) {   
                 return 0;
             }
             return 2;
@@ -204,7 +205,7 @@ class Room {
                 return 3;
             } 
             //check to see if current card has value greater than card on top of pile
-            else if (card.val < this.c[this.c.length-1].val) {   
+            else if (card.val < this.c[this.c.length-1].substring(0, this.c[this.c.length-1].length-1)) {   
                 return 0;
             }
             return 3;

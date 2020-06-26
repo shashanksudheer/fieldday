@@ -135,12 +135,17 @@ io.on('connection', function (socket) {
       //redisplay cards on the clients screen
       io.to(socket.id).emit('refreshHand', players[socket.id].hand);
     } 
+
+    for (var aPlayer of myRoom.players) {
+      console.log("refreshing piles of " + aPlayer.socket_id);
+      io.to(aPlayer.socket_id).emit('refreshPiles', myRoom.s, myRoom.h, myRoom.c, myRoom.d);
+    }
   });
 
 
   //calculation to determine which piles a card can be placed on
   socket.on('checkPiles', function(card) {
-    console.log(myRoom.ruleCheck(card));
+    console.log("rule check: " + myRoom.ruleCheck(card));
     io.to(socket.id).emit('checkPiles', myRoom.ruleCheck(card));
   });
 

@@ -229,6 +229,19 @@ export default class Game extends Phaser.Scene {
       self.add.text(290, 45, p1pts).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff');
     }
 
+    //function that adds a card to pile graphically
+    var addCardToPile = (gameObject, dropZone) => {
+      //update the number of cards in pile to calculate offset dynamically
+      dropZone.data.values.cards++;
+
+      //set the pile to be centered horizontally and near the top of the zone 
+      gameObject.x = dropZone.x;
+      gameObject.y = dropZone.y - 100 + (dropZone.data.values.cards * 25);
+
+      //make the card smaller and make it a static object
+      gameObject.disableInteractive();
+    }
+
     //*** CARD MANIPULATION (dragging and such)
     this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
       gameObject.x = pointer.x;
@@ -277,7 +290,21 @@ export default class Game extends Phaser.Scene {
       self.socket.emit('checkPiles', gameObject.texture.key);
       
       //wait for response from server
-      if (pileCheck == 1) {
+      if (pileCheck == 0) {
+
+        //highlight the pile tops
+        self.pileTop1.setAlpha(0.2);
+        self.pileTop2.setAlpha(0.2);
+        self.pileTop3.setAlpha(0.2);
+        self.pileTop4.setAlpha(0.2);
+
+        self.dropZone1.disableInteractive();
+        self.dropZone2.disableInteractive();
+        self.dropZone3.disableInteractive();
+        self.dropZone4.disableInteractive();
+
+      }
+      else if (pileCheck == 1) {
 
         //highlight the pile tops
         self.pileTop1.setAlpha(1);
@@ -370,50 +397,11 @@ export default class Game extends Phaser.Scene {
     });//end on dragend
 
     this.input.on('drop', function (pointer, gameObject, dropZone) {
-      //update the number of cards in pile to calculate offset dynamically
-      dropZone.data.values.cards++;
 
-      //refreshPileTopNums();
-
-      //set the pile to be centered horizontally and near the top of the zone 
-      gameObject.x = dropZone.x;
-      gameObject.y = dropZone.y - 100 + (dropZone.data.values.cards * 25);
-
-      //make the card smaller and make it a static object
-      gameObject.disableInteractive();
+      addCardToPile(gameObject, dropZone)
 
       //remove the current card from the group (probably not required)
       handGroup.remove(gameObject);
-
-      // //wait for response from server
-      // if (pileCheck == 1) {
-       
-      //   //disable dropZones
-      //   self.dropZone2.disableInteractive();
-      //   self.dropZone3.disableInteractive();
-      //   self.dropZone4.disableInteractive();
-      // }
-      // else if (pileCheck == 2) {
-
-      //   //disable dropZones
-      //   self.dropZone1.disableInteractive();
-      //   self.dropZone3.disableInteractive();
-      //   self.dropZone4.disableInteractive();
-      // }
-      // else if (pileCheck == 3) {
-      
-      //   //disable dropZones
-      //   self.dropZone1.disableInteractive();
-      //   self.dropZone2.disableInteractive();
-      //   self.dropZone4.disableInteractive();
-      // }
-      // else if (pileCheck == 4) {
-        
-      //   //disable dropZones
-      //   self.dropZone1.disableInteractive();
-      //   self.dropZone2.disableInteractive();
-      //   self.dropZone3.disableInteractive();
-      // }
 
       //when card is dropped update server to add the card to pile object
         //gameObject.texture.key holds the name of the texture (string representation of card)
@@ -459,6 +447,28 @@ export default class Game extends Phaser.Scene {
 
     this.socket.on('checkPiles', function (piles) {
       pileCheck = piles;
+    });
+
+    this.socket.on('refreshPiles', function(s, h, c, d) {
+      for (var cardS of s) {
+        let card = self.add.sprite(0, 0, cardS).setScale(0.17, 0.17);
+        addCardToPile(card, self.dropZone1);
+      }
+
+      for (var cardS of d) {
+        let card = self.add.sprite(0, 0, cardS).setScale(0.17, 0.17);
+        addCardToPile(card, self.dropZone2);
+      }
+
+      for (var cardS of c) {
+        let card = self.add.sprite(0, 0, cardS).setScale(0.17, 0.17);
+        addCardToPile(card, self.dropZone3);
+      }
+
+      for (var cardS of h) {
+        let card = self.add.sprite(0, 0, cardS).setScale(0.17, 0.17);
+        addCardToPile(card, self.dropZone4);
+      }
     });
 
   } //end create()
