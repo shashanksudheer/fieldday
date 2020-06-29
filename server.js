@@ -137,7 +137,6 @@ io.on('connection', function (socket) {
     } 
 
     for (var aPlayer of myRoom.players) {
-      console.log("refreshing piles of " + aPlayer.socket_id);
       io.to(aPlayer.socket_id).emit('refreshPiles', myRoom.s, myRoom.h, myRoom.c, myRoom.d);
     }
   });

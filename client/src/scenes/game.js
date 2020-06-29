@@ -202,24 +202,7 @@ export default class Game extends Phaser.Scene {
     //section of code to deal with displaying names on the scoreboard
     var nameGroup = this.add.group();
 
-    this.socket.on('displayBoard', function(nameArr) {
-      var y = 675;
-      var i = 0;
-      nameGroup.clear(true, true);
-      for (var name of nameArr) {
-        var newName = self.add.text(1300, y + i, name); //.setFontSize(28).setFontFamily('Nunito').setColor('#FDFDFF');
-        newName.setStyle({
-          fontSize: '28px',
-          fontFamily: 'Nunito',
-          fontStyle: '600',
-        });
-        nameGroup.add(newName);
-        i += 45;
-      }
-    });
-
-
-    //display betting chips
+        //display betting chips
     this.add.sprite(75, 600, 'white').setScale(0.3, 0.3).setInteractive();
     this.add.sprite(75, 500, 'joker').setScale(0.3, 0.3).setInteractive();
     this.add.sprite(75, 800, 'pope').setScale(0.3, 0.3).setInteractive();
@@ -279,12 +262,15 @@ export default class Game extends Phaser.Scene {
           }
       }
     });
-     
+    
     //make sure to refresh pile numbers on top
     var refreshPileTopNums = function() {
       var p1pts = self.dropZone1.data.values.cards;
       self.add.text(290, 45, p1pts).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff');
     }
+
+    //groups
+    var pileGroups = this.add.group();
 
     //function that adds a card to pile graphically
     var addCardToPile = (gameObject, dropZone) => {
@@ -293,10 +279,11 @@ export default class Game extends Phaser.Scene {
 
       //set the pile to be centered horizontally and near the top of the zone 
       gameObject.x = dropZone.x;
-      gameObject.y = dropZone.y - 100 + (dropZone.data.values.cards * 25);
+      gameObject.y = dropZone.y  - 70 + (dropZone.data.values.cards * 25);
 
       //make the card smaller and make it a static object
       gameObject.disableInteractive();
+      pileGroups.add(gameObject);
     }
 
     //*** CARD MANIPULATION (dragging and such)
@@ -344,6 +331,10 @@ export default class Game extends Phaser.Scene {
       self.children.bringToTop(gameObject);
       
       //when a card is selected send a request to server to figure out which piles the card can be played on
+      cardKey = gameObject.texture.key;
+
+      gameObject.setTexture(cardKey);
+
       self.socket.emit('checkPiles', cardKey);
       
       //wait for response from server
@@ -444,17 +435,11 @@ export default class Game extends Phaser.Scene {
       self.pileTop3.setAlpha(1);
       self.pileTop4.setAlpha(1);
 
-      // //make all dropZones interactive again
-      // self.dropZone1.setInteractive();
-      // self.dropZone2.setInteractive();
-      // self.dropZone3.setInteractive();
-      // self.dropZone4.setInteractive();
-
     });//end on dragend
 
     this.input.on('drop', function (pointer, gameObject, dropZone) {
 
-      addCardToPile(gameObject, dropZone)
+      addCardToPile(gameObject, dropZone);
 
       //remove the current card from the group (probably not required)
       handGroup.remove(gameObject);
@@ -465,14 +450,24 @@ export default class Game extends Phaser.Scene {
       self.socket.emit('cardPlayed', gameObject.texture.key, dropZone.name);
     }); //end drop
 
-
+    //hover functions
+    var cardHover = function(group) {
+      var children = group.getChildren();
+      for (var child of children) {
+        child.on('pointerover', function(event) {
+          this.y -= 20;
+          //this.setTexture(cardKey+'H');
+        });
+    
+        child.on('pointerout', function(event) {
+          this.y += 20;
+          //this.setTexture(cardKey);
+        });
+      }
+    };
 
     /* ------------------------------ SOCKET HANDLERS --------------------------------------- */
 
-    //when server sends dealHand message deal hand to client
-    this.socket.on('dealHand', function(hand) {
-      self.dealCards(hand);
-    });
 
     //creating a group for the hand
     var handGroup = this.add.group();
@@ -488,20 +483,16 @@ export default class Game extends Phaser.Scene {
       for (let i = 0; i < 5; i++) {
         this.hand.push(hand[i]);
         let card = handGroup.create(325 + (i * 200), 700, hand[i]).setScale(0.235, 0.235).setInteractive();
-        
-        //hover functions
-        card.on('pointerover', function() {
-          card.y -= 20;
-          cardKey = card.texture.key;
-          card.setTexture(cardKey+'H');
-        });
-        card.on('pointerout', function() {
-          card.y += 20;
-          card.setTexture(cardKey);
-        });
+          
 
         this.input.setDraggable(card);
       }
+
+      //add the hover stuff
+      cardHover(handGroup);
+
+      //disable ready button and replace with rules
+      this.ready.disableInteractive();
     };
 
     this.socket.on('checkPiles', function (piles) {
@@ -509,6 +500,13 @@ export default class Game extends Phaser.Scene {
     });
 
     this.socket.on('refreshPiles', function(s, h, c, d) {
+      pileGroups.clear(true, true);
+
+      self.dropZone1.data.values.cards = 0;
+      self.dropZone2.data.values.cards = 0;
+      self.dropZone3.data.values.cards = 0;
+      self.dropZone4.data.values.cards = 0;
+
       for (var cardS of s) {
         let card = self.add.sprite(0, 0, cardS).setScale(0.17, 0.17);
         addCardToPile(card, self.dropZone1);
@@ -527,6 +525,28 @@ export default class Game extends Phaser.Scene {
       for (var cardS of h) {
         let card = self.add.sprite(0, 0, cardS).setScale(0.17, 0.17);
         addCardToPile(card, self.dropZone4);
+      }
+    });
+
+    //when server sends dealHand message deal hand to client
+    this.socket.on('dealHand', function(hand) {
+      self.dealCards(hand);
+    });
+
+    //display the names on the scoreboard
+    this.socket.on('displayBoard', function(nameArr) {
+      var y = 675;
+      var i = 0;
+      nameGroup.clear(true, true);
+      for (var name of nameArr) {
+        var newName = self.add.text(1300, y + i, name); //.setFontSize(28).setFontFamily('Nunito').setColor('#FDFDFF');
+        newName.setStyle({
+          fontSize: '28px',
+          fontFamily: 'Nunito',
+          fontStyle: '600',
+        });
+        nameGroup.add(newName);
+        i += 45;
       }
     });
 
