@@ -136,8 +136,11 @@ io.on('connection', function (socket) {
       io.to(socket.id).emit('refreshHand', players[socket.id].hand);
     } 
 
+    //update point values of piles
+    myRoom.calculatePoints();
+
     for (var aPlayer of myRoom.players) {
-      io.to(aPlayer.socket_id).emit('refreshPiles', myRoom.s, myRoom.h, myRoom.c, myRoom.d);
+      io.to(aPlayer.socket_id).emit('refreshPiles', myRoom.s, myRoom.h, myRoom.c, myRoom.d, myRoom.points[0], myRoom.points[1], myRoom.points[2], myRoom.points[3]);
     }
   });
 

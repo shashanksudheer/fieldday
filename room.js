@@ -20,6 +20,9 @@ class Room {
         this.h = [];
         this.c = [];
 
+        //array holds cumulative point values of piles
+        this.points = [0, 0, 0, 0];
+
         //discarded cards are held in this array
         this.discard = [];
 
@@ -221,6 +224,34 @@ class Room {
             return 7;
         }
     }//end rulecheck
+
+    //calculate points of piles and store updated points in array
+    calculatePoints() {
+        var sum = 0;
+        //calc for spades
+        for (var card of this.s) {
+            sum += Number(card.substring(0, card.length - 1));
+        }
+        this.points[0] = sum;
+
+        sum = 0;
+        for (var card of this.d) {
+            sum += Number(card.substring(0, card.length - 1));
+        }
+        this.points[1] = sum;
+
+        sum = 0;
+        for (var card of this.c) {
+            sum += Number(card.substring(0, card.length - 1));
+        }
+        this.points[2] = sum;
+
+        sum = 0;
+        for (var card of this.h) {
+            sum += Number(card.substring(0, card.length - 1));
+        }
+        this.points[3] = sum;
+    }
 }
 
 //export the Room Class to be accessed by other server side files

@@ -263,10 +263,29 @@ export default class Game extends Phaser.Scene {
       }
     });
     
+    var pileNumGroup = this.add.group();
+
     //make sure to refresh pile numbers on top
-    var refreshPileTopNums = function() {
-      var p1pts = self.dropZone1.data.values.cards;
-      self.add.text(290, 45, p1pts).setFontSize(18).setFontFamily('Trebuchet MS').setColor('#00ffff');
+    var updatePileNums = function(s, d, c, h) {
+      pileNumGroup.clear(true, true);
+      var p1pts = s;
+      var p2pts = d;
+      var p3pts = c;
+      var p4pts = h;
+
+      var x = 0;
+      var y = 0;
+      var z = 0;
+      var w = 0;
+
+      if (p1pts > 9) { x = 6; } 
+      if (p2pts > 9) { y = 6; } 
+      if (p3pts > 9) { z = 6; } 
+      if (p4pts > 9) { w = 6; } 
+      pileNumGroup.add(self.add.text(330 - x, 34, p1pts).setFontSize(28).setFontFamily('Nunito').setColor('#000000').setAlpha(0.4));
+      pileNumGroup.add(self.add.text(580 - y, 34, p2pts).setFontSize(28).setFontFamily('Nunito').setColor('#000000').setAlpha(0.4));
+      pileNumGroup.add(self.add.text(830 - z, 34, p3pts).setFontSize(28).setFontFamily('Nunito').setColor('#000000').setAlpha(0.4));
+      pileNumGroup.add(self.add.text(1080 - w, 34, p4pts).setFontSize(28).setFontFamily('Nunito').setColor('#000000').setAlpha(0.4));
     }
 
     //groups
@@ -499,7 +518,9 @@ export default class Game extends Phaser.Scene {
       pileCheck = piles;
     });
 
-    this.socket.on('refreshPiles', function(s, h, c, d) {
+    this.socket.on('refreshPiles', function(s, h, c, d, sP, dP, cP, hP) {
+      updatePileNums(sP, dP, cP, hP);
+
       pileGroups.clear(true, true);
 
       self.dropZone1.data.values.cards = 0;
