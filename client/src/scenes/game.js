@@ -11,7 +11,6 @@ export default class Game extends Phaser.Scene {
       //set up socket to connect to server
       this.socket = io('http://localhost:8081');
 
-      //save hand information on client side (NOT REQUIRED - DOUBLE CHECK)
       this.hand = [];
   };
 
@@ -215,8 +214,7 @@ export default class Game extends Phaser.Scene {
       var readyUp = this.add.group();
 
       var readyBox = this.add.sprite(1400, 610, 'ready').setScale(2, 2).setAlpha(0.9);
-      this.ready = this.add.text(1360, 597, ['READY']).setInteractive(); //.setFontSize(18).setFontFamily('Nunito').setColor('#DDFFE6').setInteractive();
-      this.ready.setStyle({
+      this.ready = this.add.text(1360, 597, ['READY']).setInteractive().setStyle({
         fontSize: '24px',
         fontFamily: 'Nunito',
         fontStyle: '700',
@@ -419,7 +417,6 @@ export default class Game extends Phaser.Scene {
         self.dropZone2.disableInteractive();
         self.dropZone3.disableInteractive();
       }
-      
     });//end on dragstart
 
     //when the card is hovered over the dropzone, make it interactive if it is hovering over the right pile
@@ -457,7 +454,6 @@ export default class Game extends Phaser.Scene {
     });//end on dragend
 
     this.input.on('drop', function (pointer, gameObject, dropZone) {
-
       addCardToPile(gameObject, dropZone);
 
       //remove the current card from the group (probably not required)
@@ -467,6 +463,12 @@ export default class Game extends Phaser.Scene {
         //gameObject.texture.key holds the name of the texture (string representation of card)
         //dropZone.name holds the pile name
       self.socket.emit('cardPlayed', gameObject.texture.key, dropZone.name);
+
+      //make cards uninteractive since turn has been completed
+      var cards = handGroup.getChildren();
+      for (var card of cards) {
+        card.disableInteractive();
+      }
     }); //end drop
 
     //hover functions
@@ -485,6 +487,26 @@ export default class Game extends Phaser.Scene {
       }
     };
 
+    //renders cards as hand on client page
+    this.dealCards = (hand) => {
+      for (let i = 0; i < 5; i++) {
+        this.hand.push(hand[i]);
+        let card = handGroup.create(325 + (i * 200), 700, hand[i]).setScale(0.235, 0.235).setInteractive();
+          
+
+        this.input.setDraggable(card);
+
+        //make cards uninteractive until it is the players turn
+        card.disableInteractive();
+      }
+
+      //add the hover stuff
+      cardHover(handGroup);
+
+      //disable ready button and replace with rules
+      this.ready.disableInteractive();
+    };
+
     /* ------------------------------ SOCKET HANDLERS --------------------------------------- */
 
 
@@ -496,23 +518,6 @@ export default class Game extends Phaser.Scene {
       handGroup.clear(true, true);
       self.dealCards(hand);
     });
-
-    //renders cards as hand on client page
-    this.dealCards = (hand) => {
-      for (let i = 0; i < 5; i++) {
-        this.hand.push(hand[i]);
-        let card = handGroup.create(325 + (i * 200), 700, hand[i]).setScale(0.235, 0.235).setInteractive();
-          
-
-        this.input.setDraggable(card);
-      }
-
-      //add the hover stuff
-      cardHover(handGroup);
-
-      //disable ready button and replace with rules
-      this.ready.disableInteractive();
-    };
 
     this.socket.on('checkPiles', function (piles) {
       pileCheck = piles;
@@ -568,6 +573,29 @@ export default class Game extends Phaser.Scene {
         });
         nameGroup.add(newName);
         i += 45;
+      }
+    });
+
+    //player can only make a move when it is their turn
+    this.socket.on('yourTurn', function() {
+
+      var cards = handGroup.getChildren();
+      for (var card of cards) {
+        card.setInteractive();
+      }
+    }); 
+
+    this.socket.on('updateBoardTurn', function(turnName) {
+      
+      var nameArr = nameGroup.getChildren();
+
+      for (var n of nameArr) {
+        if (n.text == turnName) {
+          n.setTint(0xc1e3ca);
+        }
+        else {
+          n.setTint(0xFFFFFF);
+        }
       }
     });
 

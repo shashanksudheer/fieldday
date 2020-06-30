@@ -96,10 +96,22 @@ io.on('connection', function (socket) {
 
     //check to see if all players are ready
     if (myRoom.checkReady()) {
+
+      //do initial setup
       myRoom.startGame();
+
       //iterate through players in room and deal their specific hand to them
       for (var player of myRoom.players) {
         io.to(player.socket_id).emit('dealHand', players[player.socket_id].hand);
+      }
+
+      //increment the turn and let the first player start his game
+      var fPlayer = myRoom.nextTurn();
+      io.to(fPlayer).emit('yourTurn');
+
+      //update boards of all players to indicate whose turn it is
+      for (var player of myRoom.players) {
+        io.to(player.socket_id).emit('updateBoardTurn', players[fPlayer].name);
       }
     }
   });
@@ -128,7 +140,7 @@ io.on('connection', function (socket) {
     players[socket.id].hand.splice(ind, 1);
 
 
-    //add a new card to the players hand from the deck
+    //add a new card to the player's hand from the deck
     if (myRoom.deck.length > 0) {
       players[socket.id].hand.push(myRoom.deck.shift());
 
@@ -139,15 +151,24 @@ io.on('connection', function (socket) {
     //update point values of piles
     myRoom.calculatePoints();
 
+    //refresh the pile data for all players
     for (var aPlayer of myRoom.players) {
       io.to(aPlayer.socket_id).emit('refreshPiles', myRoom.s, myRoom.h, myRoom.c, myRoom.d, myRoom.points[0], myRoom.points[1], myRoom.points[2], myRoom.points[3]);
     }
+
+    //increment turn and allow next player to make a move
+    var nxtPlayer = myRoom.nextTurn();
+    io.to(nxtPlayer).emit('yourTurn');
+
+    //update boards of all players to indicate whose turn it is
+      for (var player of myRoom.players) {
+        io.to(player.socket_id).emit('updateBoardTurn', players[nxtPlayer].name);
+      }
   });
 
 
   //calculation to determine which piles a card can be placed on
   socket.on('checkPiles', function(card) {
-    console.log("rule check: " + myRoom.ruleCheck(card));
     io.to(socket.id).emit('checkPiles', myRoom.ruleCheck(card));
   });
 

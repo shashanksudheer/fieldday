@@ -50,6 +50,19 @@ class Room {
 
     }
 
+    nextTurn() {
+        //edge case for start of the game
+        if (this.current == 0) {
+            this.current++;
+            return this.players[0].socket_id;
+        }
+
+        //otherwise the mod of the turn by the number of players will determine which players turn it is
+        var playerNum =  this.current % this.players.length;
+        this.current++;
+        return this.players[playerNum].socket_id;
+    }
+
     //function that shuffles deck
     shuffleDeck() {
         for (var i = 0; i < 1000; i++)
@@ -127,8 +140,6 @@ class Room {
             suit: s.slice(-1),
             val: s.substring(0, s.length - 1)
         };
-
-        console.log(card);
     
         //Check for spades 
         if (card.suit == 's') {
