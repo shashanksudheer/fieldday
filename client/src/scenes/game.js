@@ -352,9 +352,10 @@ export default class Game extends Phaser.Scene {
 
       gameObject.setTexture(cardKey);
 
-      self.socket.emit('checkPiles', cardKey);
-      
-      //wait for response from server
+      self.socket.emit('checkPiles', cardKey, function(chk) {
+        pileCheck = chk;
+
+        //wait for response from server
       if (pileCheck == 0) {
 
         //highlight the pile tops
@@ -417,6 +418,7 @@ export default class Game extends Phaser.Scene {
         self.dropZone2.disableInteractive();
         self.dropZone3.disableInteractive();
       }
+      });
     });//end on dragstart
 
     //when the card is hovered over the dropzone, make it interactive if it is hovering over the right pile
@@ -519,9 +521,9 @@ export default class Game extends Phaser.Scene {
       self.dealCards(hand);
     });
 
-    this.socket.on('checkPiles', function (piles) {
-      pileCheck = piles;
-    });
+    // this.socket.on('checkPiles', function (piles) {
+    //   pileCheck = piles;
+    // });
 
     this.socket.on('refreshPiles', function(s, h, c, d, sP, dP, cP, hP) {
       updatePileNums(sP, dP, cP, hP);

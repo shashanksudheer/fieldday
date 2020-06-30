@@ -168,8 +168,9 @@ io.on('connection', function (socket) {
 
 
   //calculation to determine which piles a card can be placed on
-  socket.on('checkPiles', function(card) {
-    io.to(socket.id).emit('checkPiles', myRoom.ruleCheck(card));
+  socket.on('checkPiles', function(card, callback) {
+    callback(myRoom.ruleCheck(card));
+    //io.to(socket.id).emit('checkPiles', myRoom.ruleCheck(card));
   });
 
   //What to do when a user disconnects
