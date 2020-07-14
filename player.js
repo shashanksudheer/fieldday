@@ -8,6 +8,7 @@
         this.name = name;
         this.points = 0;
         this.ready = false;
+        this.discard = [];
     }
 
     //allows to set a name/username for player obj (will be taken from actual username later)

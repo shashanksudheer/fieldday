@@ -138,101 +138,97 @@ class Room {
     ruleCheck(s) {
         var card = {
             suit: s.slice(-1),
-            val: s.substring(0, s.length - 1)
+            val: Number(s.substring(0, s.length - 1))
         };
     
         //Check for spades 
         if (card.suit == 's') {
             //check to see if empty pile
             if (this.s.length == 0) {
-                //is it a face card?
                 if (card.val > 10) {
-                    return 0;
+                    return [0, 0];
                 }
-                return 1;
+                return [1, 0];
             }
             //check for ace pile win condition
             else if (card.val == 1 && this.s.length >= 3) {
-                return 1;
+                return [1, 1];
             } 
             //check to see if current card has value greater than card on top of pile
-            else if (card.val < this.s[this.s.length-1].substring(0, this.s[this.s.length-1].length-1)) {   
-                return 0;
+            else if (card.val < Number(this.s[this.s.length-1].substring(0, this.s[this.s.length-1].length-1))) {  
+                return [0, 0];
             }
-            return 1;
+            return [1, 0];
         }
     
         //check for hearts
         else if (card.suit == 'h') {
             //check to see if empty pile
             if (this.h.length == 0) {
-                //is it a face card?
                 if (card.val > 10) {
-                    return 0;
+                    return [0, 0];
                 }
-                return 4;
+                return [4, 0];
             }
             //check for ace pile win condition
             else if (card.val == 1 && this.h.length >= 3) {
-                return 4;
+                return [4, 1];
             } 
             //check to see if current card has value greater than card on top of pile
-            else if (card.val < this.h[this.h.length-1].substring(0, this.h[this.h.length-1].length-1)) {   
-                return 0;
+            else if (card.val < Number(this.h[this.h.length-1].substring(0, this.h[this.h.length-1].length-1))) {  
+                return [0, 0];
             }
-            return 4;
+            return [4, 0];
         }
     
         //check for diamonds
         else if (card.suit == 'd') {
             //check to see if empty pile
             if (this.d.length == 0) {
-                //is it a face card?
                 if (card.val > 10) {
-                    return 0;
+                    return [0, 0];
                 }
-                return 2;
+                return [2, 0];
             }
             //check for ace pile win condition
             else if (card.val == 1 && this.d.length >= 3) {
-                return 2;
+                return [2, 1];
             } 
             //check to see if current card has value greater than card on top of pile
-            else if (card.val < this.d[this.d.length-1].substring(0, this.d[this.d.length-1].length-1)) {   
-                return 0;
+            else if (card.val < Number(this.d[this.d.length-1].substring(0, this.d[this.d.length-1].length-1))) {   
+                return [0, 0];
             }
-            return 2;
+            return [2, 0];
         }
     
         //check for clubs
         else if (card.suit == 'c') {
             //check to see if empty pile
             if (this.c.length == 0) {
-                //is it a face card?
                 if (card.val > 10) {
-                    return 0;
+                    return [0, 0];
                 }
-                return 3;
+                return [3, 0];
             }
             //check for ace pile win condition
             else if (card.val == 1 && this.c.length >= 3) {
-                return 3;
+                return [3, 1];
             } 
             //check to see if current card has value greater than card on top of pile
-            else if (card.val < this.c[this.c.length-1].substring(0, this.c[this.c.length-1].length-1)) {   
-                return 0;
+            else if (card.val < Number(this.c[this.c.length-1].substring(0, this.c[this.c.length-1].length-1))) {   
+                return [0, 0];
             }
-            return 3;
+            return [3, 0];
         }
     
         //check if pope
         else if (card.suit == 'p') {  
-            return 6;
+            return [6, 2];
         }
     
         //check if joker
         else if (card.suit = 'j') {
-            return 7;
+            return [7, 3];
         }
     }//end rulecheck
 
@@ -241,25 +237,33 @@ class Room {
         var sum = 0;
         //calc for spades
         for (var card of this.s) {
-            sum += Number(card.substring(0, card.length - 1));
+            var val = Number(card.substring(0, card.length - 1));
+            if (val > 10) { sum += 20; }
+            else { sum += val; }
         }
         this.points[0] = sum;
 
         sum = 0;
         for (var card of this.d) {
-            sum += Number(card.substring(0, card.length - 1));
+            var val = Number(card.substring(0, card.length - 1));
+            if (val > 10) { sum += 20; }
+            else { sum += val; }
         }
         this.points[1] = sum;
 
         sum = 0;
         for (var card of this.c) {
-            sum += Number(card.substring(0, card.length - 1));
+            var val = Number(card.substring(0, card.length - 1));
+            if (val > 10) { sum += 20; }
+            else { sum += val; }
         }
         this.points[2] = sum;
 
         sum = 0;
         for (var card of this.h) {
-            sum += Number(card.substring(0, card.length - 1));
+            var val = Number(card.substring(0, card.length - 1));
+            if (val > 10) { sum += 20; }
+            else { sum += val; }
         }
         this.points[3] = sum;
     }

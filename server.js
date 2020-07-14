@@ -134,6 +134,10 @@ io.on('connection', function (socket) {
     else if (pile =="c") {
       myRoom.c.push(card);
     }
+    //if the card is KO'd
+    else if (pile == "KO") {
+      players[socket.id].discard.push(card);
+    }
 
     //remove the card from the players hand
     const ind = players[socket.id].hand.indexOf(card);
@@ -169,7 +173,22 @@ io.on('connection', function (socket) {
 
   //calculation to determine which piles a card can be placed on
   socket.on('checkPiles', function(card, callback) {
-    callback(myRoom.ruleCheck(card));
+    var rule = myRoom.ruleCheck(card);
+    if (rule[1] == 1) {
+      if (rule[0] == 1) {
+        myRoom.players[socket.id].points = myRoom.points[0];
+      }
+      else if (rule[0] == 2) {
+        myRoom.players[socket.id].points = myRoom.points[1];
+      }
+      else if (rule[0] == 3) {
+        myRoom.players[socket.id].points = myRoom.points[2];
+      }
+      else if (rule[0] == 4) {
+        myRoom.players[socket.id].points = myRoom.points[3];
+      }
+    }
+    callback(rule);
     //io.to(socket.id).emit('checkPiles', myRoom.ruleCheck(card));
   });
 

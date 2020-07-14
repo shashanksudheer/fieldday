@@ -162,7 +162,11 @@ export default class Game extends Phaser.Scene {
     //chat box
     var rect = this.add.rectangle(1400, 300, 300, 535, 0x000000).setAlpha(0.7);
     
+    //variable that assists with pile calculations
     var pileCheck;
+
+    //variable that checks for win conditions
+    var winChk;
 
     //global variable to store current card being dragged & hovered
     var cardKey;
@@ -172,6 +176,10 @@ export default class Game extends Phaser.Scene {
     const pileY = 260;
     const pileW = 200;
     const pileL = 300;
+
+    this.zoneKO = new Zone(this, "KO");
+    this.dropZoneKO = this.zoneKO.renderZone(90, pileY, 160, pileL).setInteractive();
+    //this.outlineKO = this.zoneKO.renderOutline(this.dropZoneKO);
 
     this.zone1 = new Zone(this, "s");
     this.dropZone1 = this.zone1.renderZone(pileX, pileY, pileW, pileL).disableInteractive();
@@ -201,17 +209,20 @@ export default class Game extends Phaser.Scene {
     //section of code to deal with displaying names on the scoreboard
     var nameGroup = this.add.group();
 
-        //display betting chips
-    this.add.sprite(75, 600, 'white').setScale(0.3, 0.3).setInteractive();
-    this.add.sprite(75, 500, 'joker').setScale(0.3, 0.3).setInteractive();
-    this.add.sprite(75, 800, 'pope').setScale(0.3, 0.3).setInteractive();
-    this.add.sprite(75, 700, 'seven').setScale(0.3, 0.3).setInteractive(); 
+    //display betting chips
+    var white = this.add.sprite(75, 600, 'white').setScale(0.3, 0.3).setInteractive();
+    var joker = this.add.sprite(75, 500, 'joker').setScale(0.3, 0.3).setInteractive();
+    var pope = this.add.sprite(75, 800, 'pope').setScale(0.3, 0.3).setInteractive();
+    var seven = this.add.sprite(75, 700, 'seven').setScale(0.3, 0.3).setInteractive(); 
+
+    //make chips draggable
+    //this.input.setDraggable(white);
 
     this.scoreboard = this.add.sprite(1405, 765, 'scoreboard').setScale(2.5, 2.5);
 
     //ready up button creation
     var readyCreate = () => {
-      var readyUp = this.add.group();
+      this.readyUp = this.add.group();
 
       var readyBox = this.add.sprite(1400, 610, 'ready').setScale(2, 2).setAlpha(0.9);
       this.ready = this.add.text(1360, 597, ['READY']).setInteractive().setStyle({
@@ -221,8 +232,9 @@ export default class Game extends Phaser.Scene {
         color: '#DDFFE6',
       }); 
 
-      readyUp.add(readyBox);
-      readyUp.add(this.ready);
+      this.readyUp.add(readyBox);
+      this.readyUp.add(this.ready);
+      //readyUp.add(this.rules).setVisible(false);
 
       //functions to deal with 'Ready Up' button interactiveness
       this.ready.on('pointerdown', function () {
@@ -230,7 +242,7 @@ export default class Game extends Phaser.Scene {
       });
 
       this.ready.on('pointerover', function () {
-        self.ready.setColor('#b8d6c0');
+        self.ready.setColor('#704646');
       });
 
       this.ready.on('pointerout', function () {
@@ -353,84 +365,74 @@ export default class Game extends Phaser.Scene {
       gameObject.setTexture(cardKey);
 
       self.socket.emit('checkPiles', cardKey, function(chk) {
-        pileCheck = chk;
+        winChk = chk[1];
+        pileCheck = chk[0];
 
         //wait for response from server
-      if (pileCheck == 0) {
+        if (pileCheck == 0) {
+          
+          //highlight the pile tops
+          self.pileTop1.setAlpha(0.2);
+          self.pileTop2.setAlpha(0.2);
+          self.pileTop3.setAlpha(0.2);
+          self.pileTop4.setAlpha(0.2);
 
-        //highlight the pile tops
-        self.pileTop1.setAlpha(0.2);
-        self.pileTop2.setAlpha(0.2);
-        self.pileTop3.setAlpha(0.2);
-        self.pileTop4.setAlpha(0.2);
+          self.dropZone1.disableInteractive();
+          self.dropZone2.disableInteractive();
+          self.dropZone3.disableInteractive();
+          self.dropZone4.disableInteractive();
 
-        self.dropZone1.disableInteractive();
-        self.dropZone2.disableInteractive();
-        self.dropZone3.disableInteractive();
-        self.dropZone4.disableInteractive();
+        }
+        else if (pileCheck == 1) {
 
-      }
-      else if (pileCheck == 1) {
+          //highlight the pile tops
+          self.pileTop1.setAlpha(1);
+          self.pileTop2.setAlpha(0.2);
+          self.pileTop3.setAlpha(0.2);
+          self.pileTop4.setAlpha(0.2);
 
-        //highlight the pile tops
-        self.pileTop1.setAlpha(1);
-        self.pileTop2.setAlpha(0.2);
-        self.pileTop3.setAlpha(0.2);
-        self.pileTop4.setAlpha(0.2);
+          self.dropZone2.disableInteractive();
+          self.dropZone3.disableInteractive();
+          self.dropZone4.disableInteractive();
+        }
+        else if (pileCheck == 2) {
 
-        self.dropZone2.disableInteractive();
-        self.dropZone3.disableInteractive();
-        self.dropZone4.disableInteractive();
-      }
-      else if (pileCheck == 2) {
+          //highlight the pile tops
+          self.pileTop1.setAlpha(0.2);
+          self.pileTop2.setAlpha(1);
+          self.pileTop3.setAlpha(0.2);
+          self.pileTop4.setAlpha(0.2);
 
-        //highlight the pile tops
-        self.pileTop1.setAlpha(0.2);
-        self.pileTop2.setAlpha(1);
-        self.pileTop3.setAlpha(0.2);
-        self.pileTop4.setAlpha(0.2);
+          self.dropZone1.disableInteractive();
+          self.dropZone3.disableInteractive();
+          self.dropZone4.disableInteractive();
+        }
+        else if (pileCheck == 3) {
 
-        self.dropZone1.disableInteractive();
-        self.dropZone3.disableInteractive();
-        self.dropZone4.disableInteractive();
-      }
-      else if (pileCheck == 3) {
+          //highlight the pile tops
+          self.pileTop1.setAlpha(0.2);
+          self.pileTop2.setAlpha(0.2);
+          self.pileTop3.setAlpha(1);
+          self.pileTop4.setAlpha(0.2);
 
-        //highlight the pile tops
-        self.pileTop1.setAlpha(0.2);
-        self.pileTop2.setAlpha(0.2);
-        self.pileTop3.setAlpha(1);
-        self.pileTop4.setAlpha(0.2);
+          self.dropZone1.disableInteractive();
+          self.dropZone2.disableInteractive();
+          self.dropZone4.disableInteractive();
+        }
+        else if (pileCheck == 4) {
+          
+          //highlight the pile tops
+          self.pileTop1.setAlpha(0.2);
+          self.pileTop2.setAlpha(0.2);
+          self.pileTop3.setAlpha(0.2);
+          self.pileTop4.setAlpha(1);
 
-        self.dropZone1.disableInteractive();
-        self.dropZone2.disableInteractive();
-        self.dropZone4.disableInteractive();
-      }
-      else if (pileCheck == 4) {
-        
-        //highlight the pile tops
-        self.pileTop1.setAlpha(0.2);
-        self.pileTop2.setAlpha(0.2);
-        self.pileTop3.setAlpha(0.2);
-        self.pileTop4.setAlpha(1);
-
-        self.dropZone1.disableInteractive();
-        self.dropZone2.disableInteractive();
-        self.dropZone3.disableInteractive();
-      }
+          self.dropZone1.disableInteractive();
+          self.dropZone2.disableInteractive();
+          self.dropZone3.disableInteractive();
+        }
       });
     });//end on dragstart
-
-    //when the card is hovered over the dropzone, make it interactive if it is hovering over the right pile
-    this.input.on('dragenter', function(pointer, gameObject, dropZone) {
-      if (pileCheck == 1 && dropZone.name == 's') {}
-      else if (pileCheck == 2 && dropZone.name == 'd') {}
-      else if (pileCheck == 3 && dropZone.name == 'c') {}
-      else if (pileCheck == 4 && dropZone.name == 'h') {}
-    });//end dragenter
-
-    this.input.on('dragleave', function(point, gameObject, dropZone) {
-    });
 
     this.input.on('dragend', function (pointer, gameObject, dropped) {
 
@@ -520,10 +522,6 @@ export default class Game extends Phaser.Scene {
       handGroup.clear(true, true);
       self.dealCards(hand);
     });
-
-    // this.socket.on('checkPiles', function (piles) {
-    //   pileCheck = piles;
-    // });
 
     this.socket.on('refreshPiles', function(s, h, c, d, sP, dP, cP, hP) {
       updatePileNums(sP, dP, cP, hP);
